@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pong Arcade - VIP Edition</title>
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --primary-cyan: #38bdf8;
+      --primary-emerald: #34d399;
+      --premium-gold: #fbbf24;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(52, 211, 153, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .top-bar {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-top {
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-top:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: var(--primary-cyan);
+    }
+
+    .btn-shop-toggle.active {
+      background: rgba(251, 191, 36, 0.2);
+      border-color: var(--premium-gold);
+      color: var(--premium-gold);
+    }
+
+    .header-badges {
+      display: flex;
+      gap: 10px;
+    }
+
+    .credit-badge {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      color: var(--premium-gold);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+
+    .vip-badge {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.3));
+      border: 1px solid var(--premium-gold);
+      color: var(--premium-gold);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 800;
+      display: none;
+      animation: vipGlow 2s infinite alternate;
+    }
+
+    @keyframes vipGlow {
+      from { box-shadow: 0 0 5px rgba(251, 191, 36, 0.3); }
+      to { box-shadow: 0 0 15px rgba(251, 191, 36, 0.8); }
+    }
+
+    .game-layout {
+      display: flex;
+      gap: 20px;
+      max-width: 1100px;
+      width: 100%;
+      justify-content: center;
+      align-items: flex-start;
+      transition: all 0.3s ease;
+    }
+
+    .game-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      flex: 1;
+      max-width: 700px;
+    }
+
+    .scoreboard {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      margin-bottom: 14px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .score-item {
+      text-align: center;
+    }
+
+    .score-item span {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .score-item strong {
+      font-size: 1.4rem;
+      color: var(--primary-emerald);
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    canvas {
+      border: 2px solid rgba(56, 189, 248, 0.3);
+      border-radius: 10px;
+      background-color: #0f172a;
+      display: block;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 10;
+    }
+
+    .overlay-screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(8px);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      padding: 24px;
+      text-align: center;
+      z-index: 10;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      border-color: var(--primary-cyan);
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary-cyan);
+    }
+
+    .controls-info {
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* Collapsible Shop Panel */
+    .shop-panel {
+      width: 360px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 560px;
+      overflow-y: auto;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .shop-panel.hidden {
+      display: none;
+    }
+
+    .shop-panel h2 {
+      font-size: 1.25rem;
+      color: var(--premium-gold);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .shop-section h3 {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    .item-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .shop-item {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shop-item:hover {
+      border-color: var(--primary-cyan);
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .shop-item.equipped {
+      border-color: var(--primary-emerald);
+      background: rgba(52, 211, 153, 0.1);
+    }
+
+    /* VIP Locked Card Styling */
+    .shop-item.vip-locked {
+      border-color: rgba(251, 191, 36, 0.3);
+      background: linear-gradient(180deg, rgba(251, 191, 36, 0.04) 0%, rgba(0, 0, 0, 0.4) 100%);
+    }
+
+    .shop-item.vip-locked:hover {
+      border-color: var(--premium-gold);
+      background: rgba(251, 191, 36, 0.1);
+    }
+
+    .shop-item .vip-badge-tag {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #07090e;
+      font-size: 0.6rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .shop-item .lock-icon {
+      position: absolute;
+      font-size: 1.1rem;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -70%);
+      pointer-events: none;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+    }
+
+    .preview-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
+
+    /* Animated Shop Previews */
+    .animated-rainbow {
+      background: linear-gradient(135deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #8b00ff);
+      background-size: 200% 200%;
+      animation: rainbowGrad 3s ease infinite;
+    }
+
+    .animated-cyber {
+      background: linear-gradient(135deg, #ff007f, #00f0ff);
+      background-size: 200% 200%;
+      animation: rainbowGrad 2s ease infinite;
+    }
+
+    .animated-gold {
+      background: linear-gradient(135deg, #ffe259, #ffa751);
+      background-size: 200% 200%;
+      animation: rainbowGrad 2.5s ease infinite;
+    }
+
+    @keyframes rainbowGrad {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .shop-item span {
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .shop-item .price {
+      font-size: 0.75rem;
+      color: var(--premium-gold);
+    }
+
+    /* VIP Teaser Modal */
+    .vip-teaser-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(7, 9, 14, 0.92);
+      backdrop-filter: blur(8px);
+      z-index: 20;
+      border-radius: 16px;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .vip-teaser-modal.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .vip-teaser-modal h3 {
+      font-size: 1.3rem;
+      color: var(--premium-gold);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .vip-teaser-modal p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .vip-perks-list {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      width: 100%;
+      text-align: left;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .vip-perk-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .teaser-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      margin-top: 6px;
+    }
+
+    .upgrade-btn {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #07090e;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 0.9rem;
+      padding: 10px;
+      border-radius: 10px;
+      transition: transform 0.2s;
+    }
+
+    .upgrade-btn:hover {
+      transform: scale(1.02);
+    }
+
+    .close-teaser-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 6px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .close-teaser-btn:hover {
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="nav-actions">
+      <a href="index.html" class="btn-top">← Hub</a>
+      <button class="btn-top btn-shop-toggle" id="toggleShopBtn" onclick="toggleShop()">🛍️ Shop</button>
+    </div>
+    <div class="header-badges">
+      <div class="vip-badge" id="vipBadge">👑 VIP ACTIVE</div>
+      <div class="credit-badge">🪙 <span id="tokenBalance">100</span> Credits</div>
+    </div>
+  </div>
+
+  <div class="game-layout">
+    <div class="game-container">
+      <div class="scoreboard">
+        <div class="score-item">
+          <span>Player 1</span>
+          <strong id="p1Score">0</strong>
+        </div>
+        <div class="score-item">
+          <span id="p2Label">Player 2</span>
+          <strong id="p2Score">0</strong>
+        </div>
+        <div class="score-item">
+          <span>Best Score</span>
+          <strong id="highScore">0</strong>
+        </div>
+      </div>
+
+      <div class="canvas-wrapper">
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+        <!-- Main Menu Overlay -->
+        <div id="startScreen" class="overlay-screen">
+          <h2>Select Game Mode</h2>
+          
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Single Player vs AI</p>
+          <div class="btn-group">
+            <button class="btn" onclick="startGame('ai', 'easy')">Easy</button>
+            <button class="btn" onclick="startGame('ai', 'medium')">Medium</button>
+            <button class="btn" onclick="startGame('ai', 'hard')">Hard AI</button>
+          </div>
+
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 6px;">Local Multiplayer</p>
+          <div class="btn-group">
+            <button class="btn" onclick="startGame('pvp')" style="border-color: var(--primary-cyan); color: var(--primary-cyan);">🎮 Player vs Player</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls-info">
+        <span><strong>P1:</strong> W / S &nbsp;|&nbsp; <strong>P2:</strong> ▲ / ▼</span>
+        <button class="btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="showMenu()">Menu</button>
+      </div>
+    </div>
+
+    <!-- Arcade Customizer Side Shop Panel -->
+    <div class="shop-panel hidden" id="shopPanel">
+      <h2>
+        <span>🛍️ Arcade Customizer</span>
+      </h2>
+      
+      <div class="shop-section">
+        <h3>Paddle Customization</h3>
+        <div class="item-grid" id="paddleShop"></div>
+      </div>
+
+      <!-- VIP Teaser Modal -->
+      <div class="vip-teaser-modal" id="vipTeaserModal">
+        <h3>👑 VIP Perk Locked</h3>
+        <p>You're viewing an exclusive VIP cosmetic! Upgrade your account to unlock this item along with other premium perks.</p>
+        
+        <div class="vip-perks-list">
+          <div class="vip-perk-item">🎨 <strong>Animated Skins:</strong> Gold Lux, Cyber Pulse, & Rainbow Chroma</div>
+          <div class="vip-perk-item">⚡ <strong>2.5x Credits:</strong> Earn 25 🪙 per point scored instead of 10</div>
+          <div class="vip-perk-item">🎁 <strong>Daily Vault:</strong> Access to the VIP Daily Rewards track</div>
+        </div>
+
+        <div class="teaser-actions">
+          <a href="premium.html" class="upgrade-btn">Get VIP Pass</a>
+          <button class="close-teaser-btn" onclick="closeTeaserModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const p1ScoreDisplay = document.getElementById("p1Score");
+    const p2ScoreDisplay = document.getElementById("p2Score");
+    const p2LabelDisplay = document.getElementById("p2Label");
+    const highScoreDisplay = document.getElementById("highScore");
+    const tokenDisplay = document.getElementById("tokenBalance");
+    const vipBadge = document.getElementById("vipBadge");
+    const startScreen = document.getElementById("startScreen");
+    const shopPanel = document.getElementById("shopPanel");
+    const toggleShopBtn = document.getElementById("toggleShopBtn");
+    const vipTeaserModal = document.getElementById("vipTeaserModal");
+
+    let gameStarted = false;
+    let gameMode = 'ai';
+    let difficulty = 'medium';
+    let animationFrameCount = 0;
+
+    // Credit & Tier Syncing
+    let tokens = parseInt(localStorage.getItem("hubTokens")) || 100;
+    const tier = localStorage.getItem("hubTier") || (localStorage.getItem("isVIP") === "true" ? "vip" : "free");
+    const isVIP = tier === "vip" || localStorage.getItem("hubVIP") === "true";
+
+    let unlockedSkins = JSON.parse(localStorage.getItem("pongUnlockedSkins")) || ["emerald"];
+    let equippedSkin = localStorage.getItem("pongEquippedSkin") || "emerald";
+
+    let playerScore = 0;
+    let opponentScore = 0;
+    let highScore = parseInt(localStorage.getItem("pongHighScore")) || 0;
+
+    if (isVIP) {
+      vipBadge.style.display = 'block';
+    }
+
+    function syncState() {
+      tokenDisplay.textContent = tokens;
+      highScoreDisplay.textContent = highScore;
+      localStorage.setItem("hubTokens", tokens);
+    }
+
+    function toggleShop() {
+      shopPanel.classList.toggle('hidden');
+      toggleShopBtn.classList.toggle('active');
+    }
+
+    function showTeaserModal() {
+      vipTeaserModal.classList.add('visible');
+    }
+
+    function closeTeaserModal() {
+      vipTeaserModal.classList.remove('visible');
+    }
+
+    // Skins Configuration (Matches Snake Shop Theme)
+    const PADDLE_SKINS = [
+      { id: 'emerald', name: 'Emerald', color: '#34d399', price: 0, vip: false },
+      { id: 'cyan_glow', name: 'Neon Cyan', color: '#38bdf8', price: 40, vip: false },
+      { id: 'cyber_pink', name: 'Cyber Pink', color: '#f43f5e', price: 80, vip: false },
+      { id: 'purple_void', name: 'Void Glow', color: '#a855f7', price: 120, vip: false },
+      // VIP Exclusive Skins
+      { id: 'vip_gold', name: 'Gold Lux', animatedClass: 'animated-gold', price: 200, vip: true, isAnimated: true, colors: ['#ffe259', '#ffa751'] },
+      { id: 'cyber_pulse', name: 'Cyberpunk', animatedClass: 'animated-cyber', price: 250, vip: true, isAnimated: true, colors: ['#ff007f', '#00f0ff'] },
+      { id: 'rgb_rainbow', name: 'RGB Chroma', animatedClass: 'animated-rainbow', price: 300, vip: true, isAnimated: true, colors: ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#8b00ff'] }
+    ];
+
+    function renderShop() {
+      const paddleGrid = document.getElementById('paddleShop');
+      paddleGrid.innerHTML = '';
+
+      PADDLE_SKINS.forEach(skin => {
+        const owned = unlockedSkins.includes(skin.id);
+        const isEquipped = equippedSkin === skin.id;
+        const isLockedVIP = skin.vip && !isVIP;
+
+        const item = document.createElement('div');
+        item.className = `shop-item ${isEquipped ? 'equipped' : ''} ${isLockedVIP ? 'vip-locked' : ''}`;
+
+        let previewStyle = skin.isAnimated ? '' : `background: ${skin.color}`;
+        let previewClass = skin.isAnimated ? `preview-dot ${skin.animatedClass}` : 'preview-dot';
+
+        item.innerHTML = `
+          ${skin.vip ? '<span class="vip-badge-tag">VIP</span>' : ''}
+          ${isLockedVIP ? '<span class="lock-icon">🔒</span>' : ''}
+          <div class="${previewClass}" style="${previewStyle}"></div>
+          <span>${skin.name}</span>
+          <span class="price">${isLockedVIP ? 'VIP PERK' : isEquipped ? 'EQUIPPED' : owned ? 'OWNED' : `${skin.price} 🪙`}</span>
+        `;
+        item.onclick = () => buyOrEquipSkin(skin);
+        paddleGrid.appendChild(item);
+      });
+    }
+
+    function buyOrEquipSkin(skinObj) {
+      if (skinObj.vip && !isVIP) {
+        showTeaserModal();
+        return;
+      }
+
+      const isOwned = unlockedSkins.includes(skinObj.id);
+
+      if (!isOwned) {
+        if (tokens < skinObj.price) {
+          alert('Not enough credits!');
+          return;
+        }
+        tokens -= skinObj.price;
+        unlockedSkins.push(skinObj.id);
+        localStorage.setItem('pongUnlockedSkins', JSON.stringify(unlockedSkins));
+        syncState();
+      }
+
+      equippedSkin = skinObj.id;
+      localStorage.setItem('pongEquippedSkin', skinObj.id);
+      renderShop();
+    }
+
+    const paddleWidth = 12;
+    const paddleHeight = 85;
+
+    const player = { x: 20, y: 200, width: paddleWidth, height: paddleHeight, dy: 0, speed: 12 };
+    const opponent = { x: 768, y: 200, width: paddleWidth, height: paddleHeight, dy: 0, speed: 9 };
+    const ball = { x: 400, y: 250, radius: 8, dx: 6, dy: 6 };
+
+    let keysPressed = {};
+
+    function showMenu() {
+      gameStarted = false;
+      startScreen.style.display = "flex";
+      syncState();
+    }
+
+    function startGame(mode, level = 'medium') {
+      gameMode = mode;
+      difficulty = level;
+
+      if (gameMode === 'ai') {
+        p2LabelDisplay.textContent = "AI";
+        if (difficulty === 'easy') opponent.speed = 6;
+        else if (difficulty === 'medium') opponent.speed = 9.5;
+        else if (difficulty === 'hard') opponent.speed = 13;
+      } else {
+        p2LabelDisplay.textContent = "Player 2";
+        opponent.speed = 12; // Matching human speed for Player 2
+      }
+
+      startScreen.style.display = "none";
+      gameStarted = true;
+      playerScore = 0;
+      opponentScore = 0;
+      updateScoreboard();
+      resetBall();
+    }
+
+    function resetBall() {
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+      let baseSpeed = difficulty === 'easy' ? 6 : difficulty === 'medium' ? 8 : 10;
+      ball.dx = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
+      ball.dy = (Math.random() * 4 + 3) * (Math.random() > 0.5 ? 1 : -1);
+    }
+
+    function updateScoreboard() {
+      if (playerScore > highScore) {
+        highScore = playerScore;
+        localStorage.setItem("pongHighScore", highScore);
+      }
+      p1ScoreDisplay.textContent = playerScore;
+      p2ScoreDisplay.textContent = opponentScore;
+      syncState();
+    }
+
+    document.addEventListener("keydown", (e) => { keysPressed[e.key] = true; });
+    document.addEventListener("keyup", (e) => { keysPressed[e.key] = false; });
+
+    function updateAI() {
+      let targetY = ball.y;
+      const paddleCenter = opponent.y + opponent.height / 2;
+      const distance = targetY - paddleCenter;
+
+      if (Math.abs(distance) > 4) {
+        opponent.y += distance > 0 ? Math.min(opponent.speed, distance) : -Math.min(opponent.speed, Math.abs(distance));
+      }
+    }
+
+    function update() {
+      animationFrameCount++;
+      if (!gameStarted) return;
+
+      // Player 1 Controls (W/S)
+      if (keysPressed["w"] || keysPressed["W"]) player.dy = -player.speed;
+      else if (keysPressed["s"] || keysPressed["S"]) player.dy = player.speed;
+      else player.dy = 0;
+
+      // Player 2 or AI Controls
+      if (gameMode === 'ai') {
+        updateAI();
+      } else {
+        if (keysPressed["ArrowUp"]) opponent.dy = -opponent.speed;
+        else if (keysPressed["ArrowDown"]) opponent.dy = opponent.speed;
+        else opponent.dy = 0;
+        opponent.y += opponent.dy;
+      }
+
+      player.y = Math.max(0, Math.min(canvas.height - player.height, player.y + player.dy));
+      opponent.y = Math.max(0, Math.min(canvas.height - opponent.height, opponent.y));
+
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+
+      if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) ball.dy *= -1;
+
+      [player, opponent].forEach((paddle) => {
+        if (
+          ball.x - ball.radius < paddle.x + paddle.width &&
+          ball.x + ball.radius > paddle.x &&
+          ball.y + ball.radius > paddle.y &&
+          ball.y - ball.radius < paddle.y + paddle.height
+        ) {
+          ball.dx *= -1.05;
+        }
+      });
+
+      if (ball.x < 0) {
+        opponentScore++;
+        updateScoreboard();
+        resetBall();
+      } else if (ball.x > canvas.width) {
+        playerScore++;
+        
+        // Award credits on scoring a point
+        const payoutRate = isVIP ? 25 : 10;
+        tokens += payoutRate;
+        
+        updateScoreboard();
+        resetBall();
+      }
+    }
+
+    function createDynamicGradient(skinObj) {
+      const angle = (animationFrameCount * 0.05) % (Math.PI * 2);
+      const x1 = canvas.width / 2 + Math.cos(angle) * (canvas.width / 2);
+      const y1 = canvas.height / 2 + Math.sin(angle) * (canvas.height / 2);
+      const x2 = canvas.width / 2 - Math.cos(angle) * (canvas.width / 2);
+      const y2 = canvas.height / 2 - Math.sin(angle) * (canvas.height / 2);
+
+      const grad = ctx.createLinearGradient(x1, y1, x2, y2);
+      const colors = skinObj.colors;
+      colors.forEach((c, idx) => {
+        grad.addColorStop(idx / (colors.length - 1), c);
+      });
+      return grad;
+    }
+
+    function draw() {
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw dashed center line
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      ctx.setLineDash([10, 10]);
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 0);
+      ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Paddle Style Lookup
+      const paddleSkinObj = PADDLE_SKINS.find(s => s.id === equippedSkin) || PADDLE_SKINS[0];
+      const paddleStyle = paddleSkinObj.isAnimated ? createDynamicGradient(paddleSkinObj) : paddleSkinObj.color;
+
+      // Draw Player 1
+      ctx.fillStyle = paddleStyle;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      // Draw Opponent / P2
+      ctx.fillStyle = gameMode === 'pvp' ? paddleStyle : "#f43f5e";
+      ctx.fillRect(opponent.x, opponent.y, opponent.width, opponent.height);
+
+      // Draw Ball
+      ctx.fillStyle = "#38bdf8";
+      ctx.shadowColor = "#38bdf8";
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    syncState();
+    renderShop();
+    loop();
+  </script>
+
+<script src="https://static.app/js/static.js" type="text/javascript"></script>
+</body>
+</html>

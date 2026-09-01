@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snake Game - Arcade Edition</title>
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --primary-cyan: #38bdf8;
+      --primary-emerald: #34d399;
+      --premium-gold: #fbbf24;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(52, 211, 153, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .top-bar {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-top {
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-top:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: var(--primary-cyan);
+    }
+
+    .btn-shop-toggle.active {
+      background: rgba(251, 191, 36, 0.2);
+      border-color: var(--premium-gold);
+      color: var(--premium-gold);
+    }
+
+    .header-badges {
+      display: flex;
+      gap: 10px;
+    }
+
+    .credit-badge {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      color: var(--premium-gold);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+
+    .vip-badge {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.3));
+      border: 1px solid var(--premium-gold);
+      color: var(--premium-gold);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 800;
+      display: none;
+      animation: vipGlow 2s infinite alternate;
+    }
+
+    @keyframes vipGlow {
+      from { box-shadow: 0 0 5px rgba(251, 191, 36, 0.3); }
+      to { box-shadow: 0 0 15px rgba(251, 191, 36, 0.8); }
+    }
+
+    .game-layout {
+      display: flex;
+      gap: 20px;
+      max-width: 1100px;
+      width: 100%;
+      justify-content: center;
+      align-items: flex-start;
+      transition: all 0.3s ease;
+    }
+
+    .game-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      flex: 1;
+      max-width: 600px;
+    }
+
+    .scoreboard {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      margin-bottom: 14px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .score-item {
+      text-align: center;
+    }
+
+    .score-item span {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .score-item strong {
+      font-size: 1.4rem;
+      color: var(--primary-emerald);
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    canvas {
+      border: 2px solid rgba(52, 211, 153, 0.4);
+      border-radius: 10px;
+      background-color: #0f172a;
+      display: block;
+      box-shadow: 0 0 20px rgba(52, 211, 153, 0.15);
+      width: 100%;
+      max-width: 520px;
+      height: auto;
+      aspect-ratio: 1 / 1;
+    }
+
+    .shake {
+      animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+
+    .controls {
+      margin-top: 14px;
+      width: 100%;
+    }
+
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary-emerald), var(--primary-cyan));
+      color: #0f172a;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.98); }
+
+    .game-over-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(4px);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .game-over-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .game-over-overlay h2 {
+      font-size: 2.2rem;
+      color: #ef4444;
+      margin-bottom: 6px;
+    }
+
+    .game-over-overlay p {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .payout-text {
+      color: var(--premium-gold);
+      font-weight: 800;
+      margin-top: 8px;
+    }
+
+    /* Collapsible Shop Panel */
+    .shop-panel {
+      width: 360px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 640px;
+      overflow-y: auto;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .shop-panel.hidden {
+      display: none;
+    }
+
+    .shop-panel h2 {
+      font-size: 1.25rem;
+      color: var(--premium-gold);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .shop-section h3 {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .shop-item {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shop-item:hover {
+      border-color: var(--primary-cyan);
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .shop-item.equipped {
+      border-color: var(--primary-emerald);
+      background: rgba(52, 211, 153, 0.1);
+    }
+
+    /* VIP Locked Card Styling */
+    .shop-item.vip-locked {
+      border-color: rgba(251, 191, 36, 0.3);
+      background: linear-gradient(180deg, rgba(251, 191, 36, 0.04) 0%, rgba(0, 0, 0, 0.4) 100%);
+    }
+
+    .shop-item.vip-locked:hover {
+      border-color: var(--premium-gold);
+      background: rgba(251, 191, 36, 0.1);
+    }
+
+    .shop-item .vip-badge-tag {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #07090e;
+      font-size: 0.6rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .shop-item .lock-icon {
+      position: absolute;
+      font-size: 1.1rem;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -70%);
+      pointer-events: none;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+    }
+
+    .preview-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
+
+    /* Animated Shop Previews */
+    .animated-rainbow {
+      background: linear-gradient(135deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #8b00ff);
+      background-size: 200% 200%;
+      animation: rainbowGrad 3s ease infinite;
+    }
+
+    .animated-cyber {
+      background: linear-gradient(135deg, #ff007f, #00f0ff);
+      background-size: 200% 200%;
+      animation: rainbowGrad 2s ease infinite;
+    }
+
+    .animated-nebula {
+      background: linear-gradient(135deg, #a855f7, #ec4899, #3b82f6);
+      background-size: 200% 200%;
+      animation: rainbowGrad 4s ease infinite;
+    }
+
+    .animated-gold {
+      background: linear-gradient(135deg, #ffe259, #ffa751);
+      background-size: 200% 200%;
+      animation: rainbowGrad 2.5s ease infinite;
+    }
+
+    @keyframes rainbowGrad {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .shop-item span {
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .shop-item .price {
+      font-size: 0.75rem;
+      color: var(--premium-gold);
+    }
+
+    /* VIP Perk Teaser Popup Modal in Shop */
+    .vip-teaser-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(7, 9, 14, 0.92);
+      backdrop-filter: blur(8px);
+      z-index: 20;
+      border-radius: 16px;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .vip-teaser-modal.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .vip-teaser-modal h3 {
+      font-size: 1.3rem;
+      color: var(--premium-gold);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .vip-teaser-modal p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .vip-perks-list {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      width: 100%;
+      text-align: left;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .vip-perk-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .teaser-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      margin-top: 6px;
+    }
+
+    .upgrade-btn {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #07090e;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 0.9rem;
+      padding: 10px;
+      border-radius: 10px;
+      transition: transform 0.2s;
+    }
+
+    .upgrade-btn:hover {
+      transform: scale(1.02);
+    }
+
+    .close-teaser-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 6px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .close-teaser-btn:hover {
+      color: #fff;
+    }
+
+    /* Mobile Controls */
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 44px);
+      grid-template-rows: repeat(3, 44px);
+      gap: 6px;
+      margin-top: 14px;
+      justify-content: center;
+    }
+
+    .dpad-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .dpad-btn:active { background: rgba(56, 189, 248, 0.3); }
+    .dpad-up { grid-column: 2; grid-row: 1; }
+    .dpad-left { grid-column: 1; grid-row: 2; }
+    .dpad-right { grid-column: 3; grid-row: 2; }
+    .dpad-down { grid-column: 2; grid-row: 3; }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="nav-actions">
+      <a href="index.html" class="btn-top">← Hub</a>
+      <button class="btn-top btn-shop-toggle" id="toggleShopBtn" onclick="toggleShop()">🛍️ Shop</button>
+    </div>
+    <div class="header-badges">
+      <div class="vip-badge" id="vipBadge">👑 VIP ACTIVE</div>
+      <div class="credit-badge">🪙 <span id="userCredits">100</span> Credits</div>
+    </div>
+  </div>
+
+  <div class="game-layout">
+    <div class="game-container">
+      <div class="scoreboard">
+        <div class="score-item">
+          <span>Score</span>
+          <strong id="score">0</strong>
+        </div>
+        <div class="score-item">
+          <span>Earned</span>
+          <strong id="sessionEarned">0 🪙</strong>
+        </div>
+        <div class="score-item">
+          <span>High Score</span>
+          <strong id="highScore">0</strong>
+        </div>
+      </div>
+
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="board"></canvas>
+        <div class="game-over-overlay" id="gameOverOverlay">
+          <h2>💀 GAME OVER</h2>
+          <p>Press Reset to try again</p>
+          <div class="payout-text" id="payoutMsg">+0 Credits Earned</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="resetBtn">🔄 Reset Game</button>
+      </div>
+
+      <div class="dpad">
+        <button class="dpad-btn dpad-up" onclick="setDir(0, -1)">▲</button>
+        <button class="dpad-btn dpad-left" onclick="setDir(-1, 0)">◄</button>
+        <button class="dpad-btn dpad-right" onclick="setDir(1, 0)">►</button>
+        <button class="dpad-btn dpad-down" onclick="setDir(0, 1)">▼</button>
+      </div>
+    </div>
+
+    <!-- Arcade Shop Panel -->
+    <div class="shop-panel hidden" id="shopPanel">
+      <h2>
+        <span>🛍️ Arcade Customizer</span>
+      </h2>
+      
+      <div class="shop-section">
+        <h3>Snake Skins</h3>
+        <div class="item-grid" id="snakeShop"></div>
+      </div>
+
+      <div class="shop-section">
+        <h3>Food Styles</h3>
+        <div class="item-grid" id="foodShop"></div>
+      </div>
+
+      <!-- VIP Teaser Modal Inside Shop Panel -->
+      <div class="vip-teaser-modal" id="vipTeaserModal">
+        <h3>👑 VIP Perk Locked</h3>
+        <p>You're viewing an exclusive VIP cosmetic! Upgrade your account to unlock this item along with other premium perks.</p>
+        
+        <div class="vip-perks-list">
+          <div class="vip-perk-item">🎨 <strong>Animated Skins:</strong> RGB Chroma, Cyberpunk, & Nebula Shift</div>
+          <div class="vip-perk-item">⚡ <strong>2.5x Credits:</strong> Earn 5 🪙 per food eaten instead of 2</div>
+          <div class="vip-perk-item">🎁 <strong>Daily Vault:</strong> Access to the VIP Daily Rewards track</div>
+        </div>
+
+        <div class="teaser-actions">
+          <a href="vip.html" class="upgrade-btn">Get VIP Pass</a>
+          <button class="close-teaser-btn" onclick="closeTeaserModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BLOCK_SIZE = 24;
+    const ROWS = 20;
+    const COLS = 20;
+
+    const canvas = document.getElementById("board");
+    const canvasWrapper = document.getElementById("canvasWrapper");
+    const context = canvas.getContext("2d");
+    const scoreElement = document.getElementById("score");
+    const sessionEarnedEl = document.getElementById("sessionEarned");
+    const highScoreElement = document.getElementById("highScore");
+    const gameOverOverlay = document.getElementById("gameOverOverlay");
+    const payoutMsg = document.getElementById("payoutMsg");
+    const resetBtn = document.getElementById("resetBtn");
+    const creditsDisplay = document.getElementById("userCredits");
+    const vipBadge = document.getElementById("vipBadge");
+    const shopPanel = document.getElementById("shopPanel");
+    const toggleShopBtn = document.getElementById("toggleShopBtn");
+    const vipTeaserModal = document.getElementById("vipTeaserModal");
+
+    canvas.width = COLS * BLOCK_SIZE;
+    canvas.height = ROWS * BLOCK_SIZE;
+
+    // Check tier status matching Daily Rewards structure
+    let credits = parseInt(localStorage.getItem('hubTokens')) || 100;
+    const tier = localStorage.getItem('hubTier') || (localStorage.getItem('isVIP') === 'true' ? 'vip' : 'free');
+    const isVIP = tier === 'vip' || localStorage.getItem('hubVIP') === 'true';
+
+    let unlockedSkins = JSON.parse(localStorage.getItem('snakeUnlockedSkins')) || ['emerald', 'apple'];
+    let equippedSnake = localStorage.getItem('snakeEquippedSkin') || 'emerald';
+    let equippedFood = localStorage.getItem('snakeEquippedFood') || 'apple';
+
+    let animationFrameCount = 0;
+
+    if (isVIP) {
+      vipBadge.style.display = 'block';
+    }
+
+    function updateCreditsDisplay() {
+      creditsDisplay.textContent = credits;
+      localStorage.setItem('hubTokens', credits);
+    }
+
+    function toggleShop() {
+      shopPanel.classList.toggle('hidden');
+      toggleShopBtn.classList.toggle('active');
+    }
+
+    function showTeaserModal() {
+      vipTeaserModal.classList.add('visible');
+    }
+
+    function closeTeaserModal() {
+      vipTeaserModal.classList.remove('visible');
+    }
+
+    // Skins (Includes Animated VIP Exclusive Options)
+    const SNAKE_SKINS = [
+      { id: 'emerald', name: 'Emerald', color: '#34d399', head: '#38bdf8', price: 0, vip: false },
+      { id: 'neon_pink', name: 'Cyber Pink', color: '#f43f5e', head: '#ec4899', price: 40, vip: false },
+      { id: 'gold_lux', name: 'Gold Lux', color: '#fbbf24', head: '#fef08a', price: 80, vip: false },
+      { id: 'void_purple', name: 'Void Glow', color: '#a855f7', head: '#c084fc', price: 120, vip: false },
+      { id: 'fire_red', name: 'Inferno', color: '#ef4444', head: '#f97316', price: 160, vip: false },
+      // VIP Exclusive Animated Skins (Visible to all, locked for non-VIP)
+      { id: 'rgb_rainbow', name: 'RGB Chroma', animatedClass: 'animated-rainbow', price: 250, vip: true, isAnimated: true, colors: ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#8b00ff'] },
+      { id: 'cyber_pulse', name: 'Cyberpunk', animatedClass: 'animated-cyber', price: 300, vip: true, isAnimated: true, colors: ['#ff007f', '#00f0ff'] },
+      { id: 'nebula_shift', name: 'Nebula Shift', animatedClass: 'animated-nebula', price: 350, vip: true, isAnimated: true, colors: ['#a855f7', '#ec4899', '#3b82f6'] }
+    ];
+
+    const FOOD_SKINS = [
+      { id: 'apple', name: 'Classic Apple', color: '#facc15', price: 0, vip: false },
+      { id: 'ruby_gem', name: 'Ruby Gem', color: '#ef4444', price: 30, vip: false },
+      { id: 'cyan_orb', name: 'Plasma Orb', color: '#06b6d4', price: 60, vip: false },
+      { id: 'star_coin', name: 'Arcade Coin', color: '#fbbf24', price: 90, vip: false },
+      // VIP Exclusive Animated Food
+      { id: 'supernova', name: 'Supernova', animatedClass: 'animated-gold', price: 200, vip: true, isAnimated: true, colors: ['#ffe259', '#ffa751'] }
+    ];
+
+    function renderShop() {
+      const snakeGrid = document.getElementById('snakeShop');
+      const foodGrid = document.getElementById('foodShop');
+
+      snakeGrid.innerHTML = '';
+      foodGrid.innerHTML = '';
+
+      SNAKE_SKINS.forEach(skin => {
+        const owned = unlockedSkins.includes(skin.id);
+        const isEquipped = equippedSnake === skin.id;
+        const isLockedVIP = skin.vip && !isVIP;
+
+        const item = document.createElement('div');
+        item.className = `shop-item ${isEquipped ? 'equipped' : ''} ${isLockedVIP ? 'vip-locked' : ''}`;
+        
+        let previewStyle = skin.isAnimated ? '' : `background: ${skin.color}`;
+        let previewClass = skin.isAnimated ? `preview-dot ${skin.animatedClass}` : 'preview-dot';
+
+        item.innerHTML = `
+          ${skin.vip ? '<span class="vip-badge-tag">VIP</span>' : ''}
+          ${isLockedVIP ? '<span class="lock-icon">🔒</span>' : ''}
+          <div class="${previewClass}" style="${previewStyle}"></div>
+          <span>${skin.name}</span>
+          <span class="price">${isLockedVIP ? 'VIP PERK' : isEquipped ? 'EQUIPPED' : owned ? 'OWNED' : `${skin.price} 🪙`}</span>
+        `;
+        item.onclick = () => buyOrEquipSkin(skin, 'snake');
+        snakeGrid.appendChild(item);
+      });
+
+      FOOD_SKINS.forEach(skin => {
+        const owned = unlockedSkins.includes(skin.id);
+        const isEquipped = equippedFood === skin.id;
+        const isLockedVIP = skin.vip && !isVIP;
+
+        const item = document.createElement('div');
+        item.className = `shop-item ${isEquipped ? 'equipped' : ''} ${isLockedVIP ? 'vip-locked' : ''}`;
+
+        let previewStyle = skin.isAnimated ? '' : `background: ${skin.color}`;
+        let previewClass = skin.isAnimated ? `preview-dot ${skin.animatedClass}` : 'preview-dot';
+
+        item.innerHTML = `
+          ${skin.vip ? '<span class="vip-badge-tag">VIP</span>' : ''}
+          ${isLockedVIP ? '<span class="lock-icon">🔒</span>' : ''}
+          <div class="${previewClass}" style="${previewStyle}; border-radius: 50%;"></div>
+          <span>${skin.name}</span>
+          <span class="price">${isLockedVIP ? 'VIP PERK' : isEquipped ? 'EQUIPPED' : owned ? 'OWNED' : `${skin.price} 🪙`}</span>
+        `;
+        item.onclick = () => buyOrEquipSkin(skin, 'food');
+        foodGrid.appendChild(item);
+      });
+    }
+
+    function buyOrEquipSkin(skinObj, type) {
+      if (skinObj.vip && !isVIP) {
+        showTeaserModal();
+        return;
+      }
+
+      const isOwned = unlockedSkins.includes(skinObj.id);
+
+      if (!isOwned) {
+        if (credits < skinObj.price) {
+          alert('Not enough credits!');
+          return;
+        }
+        credits -= skinObj.price;
+        unlockedSkins.push(skinObj.id);
+        localStorage.setItem('snakeUnlockedSkins', JSON.stringify(unlockedSkins));
+        updateCreditsDisplay();
+      }
+
+      if (type === 'snake') {
+        equippedSnake = skinObj.id;
+        localStorage.setItem('snakeEquippedSkin', skinObj.id);
+      } else {
+        equippedFood = skinObj.id;
+        localStorage.setItem('snakeEquippedFood', skinObj.id);
+      }
+
+      renderShop();
+    }
+
+    let snakeX = BLOCK_SIZE * 5;
+    let snakeY = BLOCK_SIZE * 5;
+    let speedX = 0;
+    let speedY = 0;
+    let nextSpeedX = 0;
+    let nextSpeedY = 0;
+    let inputLocked = false;
+
+    let snakeBody = [];
+    let foodX;
+    let foodY;
+    let particles = [];
+
+    let gameOver = false;
+    let score = 0;
+    let sessionCreditsEarned = 0;
+    let highScore = localStorage.getItem("snakeHighScore") || 0;
+
+    highScoreElement.textContent = highScore;
+
+    function placeFood() {
+      foodX = Math.floor(Math.random() * COLS) * BLOCK_SIZE;
+      foodY = Math.floor(Math.random() * ROWS) * BLOCK_SIZE;
+
+      if (foodX === snakeX && foodY === snakeY) {
+        placeFood();
+        return;
+      }
+
+      for (let segment of snakeBody) {
+        if (segment[0] === foodX && segment[1] === foodY) {
+          placeFood();
+          return;
+        }
+      }
+    }
+
+    function spawnParticles(x, y, color) {
+      for (let i = 0; i < 8; i++) {
+        particles.push({
+          x: x + BLOCK_SIZE / 2,
+          y: y + BLOCK_SIZE / 2,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 0.5) * 4,
+          size: Math.random() * 4 + 2,
+          color: color || '#fbbf24',
+          life: 1.0
+        });
+      }
+    }
+
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.05;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+    }
+
+    function drawParticles() {
+      particles.forEach(p => {
+        context.globalAlpha = p.life;
+        context.fillStyle = p.color;
+        context.beginPath();
+        context.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        context.fill();
+        context.globalAlpha = 1.0;
+      });
+    }
+
+    // Dynamic Gradient Creator for Animated VIP Skins
+    function createDynamicGradient(skinObj) {
+      const angle = (animationFrameCount * 0.05) % (Math.PI * 2);
+      const x1 = canvas.width / 2 + Math.cos(angle) * (canvas.width / 2);
+      const y1 = canvas.height / 2 + Math.sin(angle) * (canvas.height / 2);
+      const x2 = canvas.width / 2 - Math.cos(angle) * (canvas.width / 2);
+      const y2 = canvas.height / 2 - Math.sin(angle) * (canvas.height / 2);
+
+      const grad = context.createLinearGradient(x1, y1, x2, y2);
+      const colors = skinObj.colors;
+      colors.forEach((c, idx) => {
+        grad.addColorStop(idx / (colors.length - 1), c);
+      });
+      return grad;
+    }
+
+    function update() {
+      animationFrameCount++;
+      if (gameOver) return;
+
+      if (nextSpeedX === 0 && nextSpeedY === 0) {
+        draw();
+        return;
+      }
+
+      speedX = nextSpeedX;
+      speedY = nextSpeedY;
+      inputLocked = false;
+
+      let newHeadX = snakeX + speedX * BLOCK_SIZE;
+      let newHeadY = snakeY + speedY * BLOCK_SIZE;
+
+      if (newHeadX < 0 || newHeadX >= COLS * BLOCK_SIZE || newHeadY < 0 || newHeadY >= ROWS * BLOCK_SIZE) {
+        triggerGameOver();
+        return;
+      }
+
+      const willEatFood = (newHeadX === foodX && newHeadY === foodY);
+      const checkBodyLength = willEatFood ? snakeBody.length : snakeBody.length - 1;
+
+      for (let i = 0; i < checkBodyLength; i++) {
+        if (newHeadX === snakeBody[i][0] && newHeadY === snakeBody[i][1]) {
+          triggerGameOver();
+          return;
+        }
+      }
+
+      if (snakeBody.length > 0) {
+        for (let i = snakeBody.length - 1; i > 0; i--) {
+          snakeBody[i] = [...snakeBody[i - 1]];
+        }
+        snakeBody[0] = [snakeX, snakeY];
+      }
+
+      snakeX = newHeadX;
+      snakeY = newHeadY;
+
+      if (willEatFood) {
+        snakeBody.push([snakeX, snakeY]);
+        
+        const foodSkinObj = FOOD_SKINS.find(f => f.id === equippedFood) || FOOD_SKINS[0];
+        spawnParticles(foodX, foodY, foodSkinObj.color);
+        placeFood();
+        
+        score++;
+        // 2.5x Multiplier for VIP Members
+        const payoutRate = isVIP ? 5 : 2;
+        sessionCreditsEarned += payoutRate;
+        credits += payoutRate;
+
+        updateCreditsDisplay();
+        updateScore();
+      }
+
+      draw();
+    }
+
+    function draw() {
+      context.fillStyle = "#0f172a";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      context.strokeStyle = "rgba(255, 255, 255, 0.03)";
+      context.lineWidth = 1;
+      for (let r = 0; r < ROWS; r++) {
+        context.beginPath();
+        context.moveTo(0, r * BLOCK_SIZE);
+        context.lineTo(canvas.width, r * BLOCK_SIZE);
+        context.stroke();
+      }
+      for (let c = 0; c < COLS; c++) {
+        context.beginPath();
+        context.moveTo(c * BLOCK_SIZE, 0);
+        context.lineTo(c * BLOCK_SIZE, canvas.height);
+        context.stroke();
+      }
+
+      // Draw Food
+      const foodSkinObj = FOOD_SKINS.find(f => f.id === equippedFood) || FOOD_SKINS[0];
+      const foodStyle = foodSkinObj.isAnimated ? createDynamicGradient(foodSkinObj) : foodSkinObj.color;
+      
+      context.shadowColor = foodSkinObj.isAnimated ? '#fbbf24' : foodSkinObj.color;
+      context.shadowBlur = 10;
+      context.fillStyle = foodStyle;
+      context.beginPath();
+      context.arc(foodX + BLOCK_SIZE / 2, foodY + BLOCK_SIZE / 2, BLOCK_SIZE / 2 - 2, 0, Math.PI * 2);
+      context.fill();
+      context.shadowBlur = 0;
+
+      // Draw Snake
+      const snakeSkinObj = SNAKE_SKINS.find(s => s.id === equippedSnake) || SNAKE_SKINS[0];
+      const snakeStyle = snakeSkinObj.isAnimated ? createDynamicGradient(snakeSkinObj) : snakeSkinObj.color;
+
+      for (let i = 0; i < snakeBody.length; i++) {
+        context.fillStyle = snakeStyle;
+        context.fillRect(snakeBody[i][0] + 1, snakeBody[i][1] + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+      }
+
+      // Draw Snake Head
+      context.shadowColor = snakeSkinObj.isAnimated ? '#38bdf8' : (snakeSkinObj.head || snakeSkinObj.color);
+      context.shadowBlur = 10;
+      context.fillStyle = snakeSkinObj.isAnimated ? createDynamicGradient(snakeSkinObj) : (snakeSkinObj.head || snakeSkinObj.color);
+      context.fillRect(snakeX + 1, snakeY + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+      context.shadowBlur = 0;
+
+      updateParticles();
+      drawParticles();
+    }
+
+    function triggerGameOver() {
+      gameOver = true;
+      gameOverOverlay.classList.add("visible");
+      canvasWrapper.classList.add("shake");
+      setTimeout(() => canvasWrapper.classList.remove("shake"), 300);
+
+      payoutMsg.textContent = `+${sessionCreditsEarned} Credits Earned!`;
+
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("snakeHighScore", highScore);
+        updateScore();
+      }
+    }
+
+    function setDir(dx, dy) {
+      if (inputLocked) return;
+      if (dx !== 0 && speedX === -dx) return;
+      if (dy !== 0 && speedY === -dy) return;
+
+      nextSpeedX = dx;
+      nextSpeedY = dy;
+      inputLocked = true;
+    }
+
+    function changeDirection(e) {
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) {
+        e.preventDefault();
+      }
+
+      if ((e.code === "ArrowUp" || e.code === "KeyW") && speedY !== 1) setDir(0, -1);
+      else if ((e.code === "ArrowDown" || e.code === "KeyS") && speedY !== -1) setDir(0, 1);
+      else if ((e.code === "ArrowLeft" || e.code === "KeyA") && speedX !== 1) setDir(-1, 0);
+      else if ((e.code === "ArrowRight" || e.code === "KeyD") && speedX !== -1) setDir(1, 0);
+    }
+
+    function resetGame() {
+      snakeX = BLOCK_SIZE * 5;
+      snakeY = BLOCK_SIZE * 5;
+      speedX = 0;
+      speedY = 0;
+      nextSpeedX = 0;
+      nextSpeedY = 0;
+      inputLocked = false;
+      snakeBody = [];
+      particles = [];
+      gameOver = false;
+      score = 0;
+      sessionCreditsEarned = 0;
+      updateScore();
+      placeFood();
+      gameOverOverlay.classList.remove("visible");
+    }
+
+    function updateScore() {
+      scoreElement.textContent = score;
+      sessionEarnedEl.textContent = `${sessionCreditsEarned} 🪙`;
+      highScoreElement.textContent = highScore;
+    }
+
+    document.addEventListener("keydown", changeDirection);
+    resetBtn.addEventListener("click", resetGame);
+
+    updateCreditsDisplay();
+    renderShop();
+    placeFood();
+    setInterval(update, 1000 / 10);
+  </script>
+
+<script src="https://static.app/js/static.js" type="text/javascript"></script>
+</body>
+</html>

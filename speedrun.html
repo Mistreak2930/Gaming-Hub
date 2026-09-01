@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Speedrun Rush - Hyper Edition</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #090d16;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.1) 0px, transparent 50%);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 900px;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .btn-back {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-back:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: #38bdf8;
+    }
+
+    .credit-badge {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      color: #fbbf24;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    header h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      background: linear-gradient(to right, #ef4444, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    header p {
+      color: #94a3b8;
+    }
+
+    .game-card {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .hud-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .hud-item {
+      text-align: center;
+    }
+
+    .hud-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .hud-val {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+
+    #timerVal { color: #f59e0b; }
+    #multiplierVal { color: #ef4444; }
+
+    .arena {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      background: #090d16;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .node {
+      position: absolute;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ef4444, #f59e0b);
+      border: 2px solid #fef08a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.6);
+      will-change: transform;
+    }
+
+    .node:active {
+      transform: scale(0.85);
+    }
+
+    .controls {
+      margin-top: 24px;
+      display: flex;
+      gap: 16px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #ef4444, #f59e0b);
+      color: #090d16;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .message {
+      margin-top: 16px;
+      font-weight: 700;
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="top-bar">
+      <button class="btn-back" onclick="window.location.href='index.html'">← Back to Hub</button>
+      <div class="credit-badge">🪙 <span id="userCredits">100</span> Credits</div>
+    </div>
+
+    <header>
+      <h1>SPEEDRUN RUSH: HYPER</h1>
+      <p>Wager 25 Credits. Moving targets accelerate as time runs out!</p>
+    </header>
+
+    <div class="game-card">
+      <div class="hud-bar">
+        <div class="hud-item">
+          <div class="hud-label">Time Remaining</div>
+          <div class="hud-val" id="timerVal">10.0s</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label">Targets Left</div>
+          <div class="hud-val" id="targetsVal">0/6</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label">Reward Multiplier</div>
+          <div class="hud-val" id="multiplierVal">4.0x</div>
+        </div>
+      </div>
+
+      <div class="arena" id="arena"></div>
+
+      <div class="message" id="msg">Press Start to begin the hard mode challenge!</div>
+
+      <div class="controls">
+        <button class="btn" id="startBtn" onclick="startChallenge()">Start Challenge (25 🪙)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ENTRY_FEE = 25;
+    const TOTAL_TARGETS = 6;
+    const INITIAL_TIME = 10.0;
+
+    let credits = parseInt(localStorage.getItem('hubTokens')) || 100;
+    let timer = INITIAL_TIME;
+    let timerInterval = null;
+    let animFrameId = null;
+    let currentTarget = 1;
+    let inProgress = false;
+    let nodesData = [];
+
+    const userCreditsEl = document.getElementById('userCredits');
+    const timerValEl = document.getElementById('timerVal');
+    const targetsValEl = document.getElementById('targetsVal');
+    const arena = document.getElementById('arena');
+    const msgEl = document.getElementById('msg');
+    const startBtn = document.getElementById('startBtn');
+
+    function updateCreditsDisplay() {
+      userCreditsEl.textContent = credits;
+      localStorage.setItem('hubTokens', credits);
+    }
+
+    function startChallenge() {
+      if (credits < ENTRY_FEE) {
+        msgEl.textContent = "Not enough credits! Claim your daily reward in the hub.";
+        msgEl.style.color = "#ef4444";
+        return;
+      }
+
+      credits -= ENTRY_FEE;
+      updateCreditsDisplay();
+
+      inProgress = true;
+      currentTarget = 1;
+      timer = INITIAL_TIME;
+      startBtn.disabled = true;
+      msgEl.textContent = "CLICK MOVING TARGETS IN ORDER (1 → 6)!";
+      msgEl.style.color = "#38bdf8";
+
+      spawnNodes();
+
+      timerInterval = setInterval(() => {
+        timer -= 0.1;
+        if (timer <= 0) {
+          timer = 0;
+          endChallenge(false);
+        }
+        timerValEl.textContent = timer.toFixed(1) + "s";
+      }, 100);
+
+      runPhysics();
+    }
+
+    function spawnNodes() {
+      arena.innerHTML = "";
+      nodesData = [];
+      targetsValEl.textContent = `0/${TOTAL_TARGETS}`;
+
+      const nodeSize = 46;
+      const maxX = arena.clientWidth - nodeSize;
+      const maxY = arena.clientHeight - nodeSize;
+
+      for (let i = 1; i <= TOTAL_TARGETS; i++) {
+        const el = document.createElement('div');
+        el.className = 'node';
+        el.textContent = i;
+
+        const x = Math.random() * maxX;
+        const y = Math.random() * maxY;
+
+        // Base trajectory angle
+        const angle = Math.random() * Math.PI * 2;
+        const baseSpeed = 1.5 + Math.random() * 1.5;
+
+        const data = {
+          id: i,
+          el: el,
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * baseSpeed,
+          vy: Math.sin(angle) * baseSpeed,
+          baseSpeed: baseSpeed
+        };
+
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+
+        el.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          handleNodeClick(i, data);
+        });
+
+        arena.appendChild(el);
+        nodesData.push(data);
+      }
+    }
+
+    function runPhysics() {
+      if (!inProgress) return;
+
+      const nodeSize = 46;
+      const maxX = arena.clientWidth - nodeSize;
+      const maxY = arena.clientHeight - nodeSize;
+
+      // Speed increases exponentially as remaining time decreases
+      const timeElapsed = INITIAL_TIME - timer;
+      const speedMultiplier = 1 + Math.pow(timeElapsed / INITIAL_TIME, 1.8) * 3.5;
+
+      nodesData.forEach(n => {
+        n.x += n.vx * speedMultiplier;
+        n.y += n.vy * speedMultiplier;
+
+        // Wall collisions
+        if (n.x <= 0) { n.x = 0; n.vx *= -1; }
+        if (n.x >= maxX) { n.x = maxX; n.vx *= -1; }
+        if (n.y <= 0) { n.y = 0; n.vy *= -1; }
+        if (n.y >= maxY) { n.y = maxY; n.vy *= -1; }
+
+        n.el.style.left = `${n.x}px`;
+        n.el.style.top = `${n.y}px`;
+      });
+
+      animFrameId = requestAnimationFrame(runPhysics);
+    }
+
+    function handleNodeClick(num, nodeData) {
+      if (!inProgress) return;
+
+      if (num === currentTarget) {
+        nodeData.el.remove();
+        nodesData = nodesData.filter(n => n.id !== num);
+        targetsValEl.textContent = `${currentTarget}/${TOTAL_TARGETS}`;
+        currentTarget++;
+
+        if (currentTarget > TOTAL_TOTAL_TARGETS) {
+          endChallenge(true);
+        }
+      } else {
+        msgEl.textContent = "WRONG TARGET! Must hit them in numerical order!";
+        msgEl.style.color = "#ef4444";
+      }
+    }
+
+    function endChallenge(success) {
+      clearInterval(timerInterval);
+      cancelAnimationFrame(animFrameId);
+      inProgress = false;
+      startBtn.disabled = false;
+
+      if (success) {
+        const reward = Math.round(ENTRY_FEE * 4); // 4x multiplier for hyper mode
+        credits += reward;
+        updateCreditsDisplay();
+        msgEl.textContent = `PERFECT CLEAR! You earned ${reward} Credits!`;
+        msgEl.style.color = "#34d399";
+      } else {
+        msgEl.textContent = "FAILED! Time expired or sequence broken.";
+        msgEl.style.color = "#ef4444";
+      }
+    }
+
+    updateCreditsDisplay();
+  </script>
+
+<script src="https://static.app/js/static.js" type="text/javascript"></script>
+</body>
+</html>

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VIP Pass Upgrade - Arcade Hub</title>
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --card-bg: rgba(15, 23, 42, 0.7);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --primary-cyan: #38bdf8;
+      --primary-emerald: #34d399;
+      --premium-gold: #fbbf24;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 50% 0%, rgba(251, 191, 36, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.08) 0px, transparent 50%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .back-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+      transition: color 0.2s;
+    }
+
+    .back-nav:hover {
+      color: var(--premium-gold);
+    }
+
+    .header-section {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header-section h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .header-section p {
+      color: var(--text-muted);
+      font-size: 1.15rem;
+    }
+
+    .billing-toggle {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .toggle-label {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .toggle-label.active {
+      color: #fff;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-color);
+      transition: .3s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #fff;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--premium-gold);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(24px);
+      background-color: #07090e;
+    }
+
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .plan-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 36px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .plan-card.featured {
+      border-color: rgba(251, 191, 36, 0.4);
+      background: linear-gradient(180deg, rgba(251, 191, 36, 0.05) 0%, rgba(15, 23, 42, 0.8) 100%);
+      box-shadow: 0 12px 32px rgba(251, 191, 36, 0.1);
+    }
+
+    .plan-badge {
+      position: absolute;
+      top: -12px;
+      right: 24px;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #07090e;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 12px;
+      text-transform: uppercase;
+    }
+
+    .plan-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .plan-price {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 24px;
+    }
+
+    .plan-price span {
+      font-size: 1rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin-bottom: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .feature-item.active {
+      color: #fff;
+    }
+
+    .plan-btn {
+      margin-top: auto;
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .plan-btn.gold {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #07090e;
+      border: none;
+    }
+
+    .plan-btn.gold:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(251, 191, 36, 0.3);
+    }
+
+    /* Checkout Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: #0f172a;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: 20px;
+      max-width: 440px;
+      width: 100%;
+      padding: 32px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: var(--premium-gold);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: var(--premium-gold);
+    }
+
+    .pay-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .pay-tab {
+      flex: 1;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .pay-tab.active {
+      border-color: var(--premium-gold);
+      color: var(--premium-gold);
+      background: rgba(251, 191, 36, 0.1);
+    }
+
+    @media (max-width: 768px) {
+      .plans-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <a href="index.html" class="back-nav">← Back to Arcade</a>
+
+    <div class="header-section">
+      <h1>Upgrade Your Arcade Pass</h1>
+      <p>Unlock VIP games, daily credit multipliers, and ad-free offline play.</p>
+    </div>
+
+    <div class="billing-toggle">
+      <span class="toggle-label active" id="monthlyLabel">Monthly</span>
+      <label class="switch">
+        <input type="checkbox" id="billingSwitch" onchange="toggleBilling()" />
+        <span class="slider"></span>
+      </label>
+      <span class="toggle-label" id="yearlyLabel">Yearly (Save 20%)</span>
+    </div>
+
+    <div class="plans-grid">
+      <!-- Free Plan -->
+      <div class="plan-card">
+        <div class="plan-title">Free Tier</div>
+        <div class="plan-price">$0 <span>/ forever</span></div>
+
+        <ul class="feature-list">
+          <li class="feature-item active">✓ Access to 4 Classic Games</li>
+          <li class="feature-item active">✓ Standard Daily Rewards (1.0x)</li>
+          <li class="feature-item">✕ VIP Arcade Vault Access</li>
+          <li class="feature-item">✕ Ad-Free Offline Mode</li>
+        </ul>
+
+        <button class="plan-btn" disabled id="freeTierBtn">Current Tier</button>
+      </div>
+
+      <!-- VIP Plan -->
+      <div class="plan-card featured">
+        <div class="plan-badge">BEST VALUE</div>
+        <div class="plan-title" style="color: #fbbf24;">VIP Pass</div>
+        <div class="plan-price" id="vipPrice">$4.99 <span>/ month</span></div>
+
+        <ul class="feature-list">
+          <li class="feature-item active">✓ Access to ALL Classic & VIP Games</li>
+          <li class="feature-item active">✓ 2.5x Daily Reward Multiplier</li>
+          <li class="feature-item active">✓ Immediate +500 Token Bonus</li>
+          <li class="feature-item active">✓ Zero Ads & Unlocked Speeds</li>
+        </ul>
+
+        <button class="plan-btn gold" id="vipBtn" onclick="openCheckout()">Buy VIP Pass</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checkout Modal -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeCheckout()">✕</button>
+      <div class="modal-title">Checkout VIP Pass</div>
+      
+      <div class="pay-tabs">
+        <div class="pay-tab active" id="tabCard" onclick="setPayMethod('card')">💳 Credit Card</div>
+        <div class="pay-tab" id="tabTokens" onclick="setPayMethod('tokens')">🪙 2,500 Tokens</div>
+      </div>
+
+      <div id="cardFields">
+        <div class="form-group">
+          <label>CARD NUMBER</label>
+          <input type="text" placeholder="4532 •••• •••• 8892" id="cardNumber" />
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <div class="form-group" style="flex: 1;">
+            <label>EXPIRY</label>
+            <input type="text" placeholder="MM/YY" />
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label>CVC</label>
+            <input type="text" placeholder="123" />
+          </div>
+        </div>
+      </div>
+
+      <div id="tokenFields" style="display: none; text-align: center; padding: 20px 0; color: var(--text-muted);">
+        Pay using accumulated Arcade Credits.
+        <div style="font-size: 1.1rem; color: #fff; font-weight: 700; margin-top: 8px;">
+          Your Balance: <span id="userTokenBal" style="color: var(--premium-gold);">0</span> Tokens
+        </div>
+      </div>
+
+      <button class="plan-btn gold" style="margin-top: 16px;" onclick="processPayment()">Complete Purchase</button>
+    </div>
+  </div>
+
+  <script>
+    const currentTier = localStorage.getItem('hubTier') || 'free';
+    const vipBtn = document.getElementById('vipBtn');
+    let payMethod = 'card';
+
+    if (currentTier === 'vip') {
+      vipBtn.textContent = 'Active Membership';
+      vipBtn.disabled = true;
+      vipBtn.style.opacity = '0.6';
+    }
+
+    function toggleBilling() {
+      const isYearly = document.getElementById('billingSwitch').checked;
+      const priceEl = document.getElementById('vipPrice');
+
+      document.getElementById('monthlyLabel').classList.toggle('active', !isYearly);
+      document.getElementById('yearlyLabel').classList.toggle('active', isYearly);
+
+      if (isYearly) {
+        priceEl.innerHTML = '$47.99 <span>/ year</span>';
+      } else {
+        priceEl.innerHTML = '$4.99 <span>/ month</span>';
+      }
+    }
+
+    function openCheckout() {
+      const tokens = parseInt(localStorage.getItem('hubTokens')) || 100;
+      document.getElementById('userTokenBal').textContent = tokens;
+      document.getElementById('checkoutModal').style.display = 'flex';
+    }
+
+    function closeCheckout() {
+      document.getElementById('checkoutModal').style.display = 'none';
+    }
+
+    function setPayMethod(method) {
+      payMethod = method;
+      document.getElementById('tabCard').classList.toggle('active', method === 'card');
+      document.getElementById('tabTokens').classList.toggle('active', method === 'tokens');
+      document.getElementById('cardFields').style.display = method === 'card' ? 'block' : 'none';
+      document.getElementById('tokenFields').style.display = method === 'tokens' ? 'block' : 'none';
+    }
+
+    function processPayment() {
+      let tokens = parseInt(localStorage.getItem('hubTokens')) || 100;
+
+      if (payMethod === 'tokens') {
+        if (tokens < 2500) {
+          alert('❌ Insufficient Arcade Credits! You need 2,500 Tokens to buy VIP.');
+          return;
+        }
+        tokens -= 2500;
+      } else {
+        const cardVal = document.getElementById('cardNumber').value.trim();
+        if (cardVal.length < 12) {
+          alert('❌ Please enter a valid card number.');
+          return;
+        }
+      }
+
+      tokens += 500; // VIP Purchase Bonus
+      localStorage.setItem('hubTier', 'vip');
+      localStorage.setItem('hubTokens', tokens);
+
+      alert('⚡ Payment Successful! VIP Pass activated.');
+      window.location.href = 'index.html';
+    }
+  </script>
+
+<script src="https://static.app/js/static.js" type="text/javascript"></script>
+</body>
+</html>
