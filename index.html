@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Arcade Hub - Gaming Hub</title>
+  
+  <!-- Supabase JS Client Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     :root {
       --bg-dark: #070a12;
@@ -155,6 +159,16 @@
     .nav-link-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+    }
+
+    .nav-link-btn.auth-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid var(--border-color);
+    }
+
+    .nav-link-btn.auth-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
     }
 
     .nav-link-btn.vip-btn {
@@ -374,12 +388,6 @@
       box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
     }
 
-    .badge-soon {
-      background: rgba(255, 255, 255, 0.05);
-      color: #64748b;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
     .game-card.disabled {
       pointer-events: none;
       opacity: 0.4;
@@ -401,6 +409,79 @@
       z-index: 100;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
+
+    /* Authentication Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 10, 18, 0.85);
+      backdrop-filter: blur(10px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-card h2 {
+      font-size: 1.5rem;
+      text-align: center;
+      background: linear-gradient(to right, var(--primary-cyan), var(--primary-emerald));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .modal-card input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .modal-card input:focus {
+      border-color: var(--primary-cyan);
+    }
+
+    .modal-card button {
+      background: linear-gradient(135deg, var(--primary-cyan), var(--primary-emerald));
+      color: #070a12;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .modal-toggle-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .modal-toggle-text span {
+      color: var(--primary-cyan);
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -413,13 +494,17 @@
       </a>
       
       <div class="stats-container">
-        <div id="userTierBadge" class="tier-badge free">FREE MEMBER</div>
+        <div id="userTierBadge" class="tier-badge free">GUEST</div>
         
         <div class="stat-pill tokens">
           <span>🪙</span>
           <span id="tokenBalance">100</span> Credits
         </div>
         
+        <button id="authBtn" class="nav-link-btn auth-btn" onclick="toggleAuthModal(true)">
+          <span>🔑</span> Log In
+        </button>
+
         <a href="rewards.html" class="nav-link-btn">
           <span>🎁</span> Daily Rewards
         </a>
@@ -560,28 +645,167 @@
 
   <div class="version">v2.2-DELUXE</div>
 
+  <!-- Login/Signup Modal Overlay -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal-card">
+      <h2 id="modalTitle">Account Login</h2>
+      <input type="email" id="authEmail" placeholder="Email Address" />
+      <input type="password" id="authPassword" placeholder="Password" />
+      <button id="authSubmitBtn" onclick="handleAuth()">Log In</button>
+      <p class="modal-toggle-text" onclick="toggleAuthMode()">
+        <span id="authToggleText">Need an account? Sign Up</span>
+      </p>
+      <p class="modal-toggle-text" onclick="toggleAuthModal(false)">Close</p>
+    </div>
+  </div>
+
   <script>
-    function initializeUserData() {
+    // --- Supabase Credentials ---
+    const SUPABASE_URL = 'https://eenolwhmmyhlakkyspem.supabase.co';
+    const SUPABASE_KEY = 'YOUR_PUBLISHABLE_ANON_KEY_HERE'; // Place your publishable key here
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentUser = null;
+    let isSignUpMode = false;
+
+    // Initialize Page & Auth Observer
+    async function init() {
+      const { data: { session } } = await db.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+        await syncUserProfile();
+      } else {
+        loadFallbackLocalStorage();
+      }
+
+      db.auth.onAuthStateChange(async (event, session) => {
+        if (session) {
+          currentUser = session.user;
+          await syncUserProfile();
+        } else {
+          currentUser = null;
+          updateAuthUI(false);
+          loadFallbackLocalStorage();
+        }
+      });
+    }
+
+    // Modal Control Functions
+    function toggleAuthModal(show) {
+      document.getElementById('authModal').classList.toggle('active', show);
+    }
+
+    function toggleAuthMode() {
+      isSignUpMode = !isSignUpMode;
+      document.getElementById('modalTitle').textContent = isSignUpMode ? 'Create Account' : 'Account Login';
+      document.getElementById('authSubmitBtn').textContent = isSignUpMode ? 'Sign Up' : 'Log In';
+      document.getElementById('authToggleText').textContent = isSignUpMode ? 'Have an account? Log In' : 'Need an account? Sign Up';
+    }
+
+    // Authentication Handlers
+    async function handleAuth() {
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+
+      if (!email || !password) return alert('Please enter email and password.');
+
+      if (isSignUpMode) {
+        const { data, error } = await db.auth.signUp({ email, password });
+        if (error) return alert('Sign Up Error: ' + error.message);
+
+        if (data.user) {
+          // Initialize DB row for new user
+          await db.from('profiles').insert([{ id: data.user.id }]);
+          alert('Account created successfully!');
+          toggleAuthModal(false);
+        }
+      } else {
+        const { error } = await db.auth.signInWithPassword({ email, password });
+        if (error) return alert('Login Error: ' + error.message);
+        toggleAuthModal(false);
+      }
+    }
+
+    async function handleLogout() {
+      await db.auth.signOut();
+    }
+
+    // Database Syncing Functions
+    async function syncUserProfile() {
+      if (!currentUser) return;
+
+      updateAuthUI(true);
+
+      const { data, error } = await db
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (data) {
+        // Update UI Stat Pills
+        document.getElementById('tokenBalance').textContent = data.tokens;
+
+        const badge = document.getElementById('userTierBadge');
+        const vipBtn = document.getElementById('vipNavBtn');
+
+        if (data.is_vip) {
+          badge.textContent = '👑 VIP MEMBER';
+          badge.className = 'tier-badge vip';
+          vipBtn.innerHTML = '<span>⭐</span> VIP Status';
+        } else {
+          badge.textContent = 'FREE MEMBER';
+          badge.className = 'tier-badge free';
+          vipBtn.innerHTML = '<span>👑</span> VIP Pass';
+        }
+
+        // Update High Score Display Cards
+        const scoreMap = {
+          'snake': data.snake_score,
+          'tetris': data.tetris_score,
+          'pong': data.pong_score,
+          'minesweeper': data.minesweeper_score,
+          '2048': data.score_2048,
+          'ttt': data.ttt_score,
+          'dino': data.dino_score,
+          'speedrun': data.speedrun_score,
+          'stickman': data.stickman_score
+        };
+
+        for (const [game, score] of Object.entries(scoreMap)) {
+          const el = document.getElementById(`score-${game}`);
+          if (el) el.textContent = score || 0;
+        }
+
+        // Sync local storage as offline backup
+        localStorage.setItem('hubTokens', data.tokens);
+        localStorage.setItem('hubVIP', data.is_vip);
+      }
+    }
+
+    function updateAuthUI(isLoggedIn) {
+      const authBtn = document.getElementById('authBtn');
+      if (isLoggedIn) {
+        authBtn.innerHTML = '<span>🚪</span> Log Out';
+        authBtn.onclick = handleLogout;
+      } else {
+        authBtn.innerHTML = '<span>🔑</span> Log In';
+        authBtn.onclick = () => toggleAuthModal(true);
+      }
+    }
+
+    function loadFallbackLocalStorage() {
       const tokens = parseInt(localStorage.getItem('hubTokens')) || 100;
       const isVIP = localStorage.getItem('hubVIP') === 'true';
 
       document.getElementById('tokenBalance').textContent = tokens;
 
       const badge = document.getElementById('userTierBadge');
-      const vipBtn = document.getElementById('vipNavBtn');
-
-      if (isVIP) {
-        badge.textContent = '👑 VIP MEMBER';
-        badge.className = 'tier-badge vip';
-        vipBtn.innerHTML = '<span>⭐</span> VIP Status';
-      } else {
-        badge.textContent = 'FREE MEMBER';
+      if (badge) {
+        badge.textContent = 'GUEST';
         badge.className = 'tier-badge free';
-        vipBtn.innerHTML = '<span>👑</span> VIP Pass';
       }
-    }
 
-    function loadHighScores() {
       const games = ['snake', 'tetris', 'pong', 'minesweeper', '2048', 'ttt', 'dino', 'speedrun', 'stickman'];
       games.forEach(game => {
         let score = 0;
@@ -612,9 +836,7 @@
       });
     }
 
-    initializeUserData();
-    loadHighScores();
+    init();
   </script>
-
 </body>
 </html>
