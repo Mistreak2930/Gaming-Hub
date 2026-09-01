@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2048 Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&display=swap" rel="stylesheet" />
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Montserrat", sans-serif;
+    }
+
+    body {
+      background-color: #faf8ef;
+      color: #776e65;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .top-bar {
+      width: 100%;
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .back-btn {
+      background-color: #8f7a66;
+      color: #f9f6f2;
+      border: none;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.2s ease;
+    }
+
+    .back-btn:hover {
+      background-color: #9f8b77;
+    }
+
+    .header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .title {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #776e65;
+      line-height: 1;
+    }
+
+    .score-container {
+      background: #bbada0;
+      padding: 8px 20px;
+      border-radius: 6px;
+      text-align: center;
+      color: white;
+      min-width: 90px;
+    }
+
+    .score-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #eee4da;
+    }
+
+    .score-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .result {
+      font-size: 1.5rem;
+      font-weight: 700;
+      height: 30px;
+      text-align: center;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 12px;
+      width: 100%;
+      height: 400px;
+      background-color: #bbada0;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .grid-item {
+      background-color: rgba(238, 228, 218, 0.35);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 700;
+      transition: background-color 0.15s ease;
+    }
+
+    .grid-item p {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+
+    .controls {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .restart-btn {
+      background-color: #8f7a66;
+      color: #f9f6f2;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .restart-btn:hover {
+      background-color: #9f8b77;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Back Button -->
+    <div class="top-bar">
+      <button class="back-btn" onclick="history.back()">&#8592; Back</button>
+    </div>
+
+    <!-- Header Section -->
+    <div class="header">
+      <div class="title">2048</div>
+      <div class="score-container">
+        <div class="score-label">SCORE</div>
+        <div class="score-value" id="score">0</div>
+      </div>
+    </div>
+
+    <!-- Status Output -->
+    <div class="result" id="result"></div>
+
+    <!-- 4x4 Grid Board -->
+    <div class="grid" id="grid">
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+      <div class="grid-item"><p></p></div>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div class="controls">
+      <button class="restart-btn" id="restartBtn">New Game</button>
+    </div>
+  </div>
+
+  <script>
+    const gridItems = [...document.querySelectorAll(".grid-item p")];
+    const scoreVal = document.getElementById("score");
+    const resultVal = document.getElementById("result");
+    const restartBtn = document.getElementById("restartBtn");
+
+    let board = Array(16).fill(0);
+    let score = 0;
+    let isGameOver = false;
+
+    const tileColors = {
+      0: { bg: "rgba(238, 228, 218, 0.35)", color: "transparent" },
+      2: { bg: "#eee4da", color: "#776e65" },
+      4: { bg: "#ede0c8", color: "#776e65" },
+      8: { bg: "#f2b179", color: "#f9f6f2" },
+      16: { bg: "#f59563", color: "#f9f6f2" },
+      32: { bg: "#f67c5f", color: "#f9f6f2" },
+      64: { bg: "#f65e3b", color: "#f9f6f2" },
+      128: { bg: "#edcf72", color: "#f9f6f2" },
+      256: { bg: "#edcc61", color: "#f9f6f2" },
+      512: { bg: "#edc850", color: "#f9f6f2" },
+      1024: { bg: "#edc53f", color: "#f9f6f2" },
+      2048: { bg: "#edc22e", color: "#f9f6f2" },
+    };
+
+    function initGame() {
+      board = Array(16).fill(0);
+      score = 0;
+      isGameOver = false;
+      scoreVal.textContent = "0";
+      resultVal.textContent = "";
+
+      generateNewBlock();
+      generateNewBlock();
+      updateBoard();
+    }
+
+    function generateNewBlock() {
+      const emptyIndices = board
+        .map((val, idx) => (val === 0 ? idx : null))
+        .filter((val) => val !== null);
+
+      if (emptyIndices.length > 0) {
+        const randIdx = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+        board[randIdx] = Math.random() < 0.9 ? 2 : 4;
+      }
+    }
+
+    function updateBoard() {
+      board.forEach((value, idx) => {
+        const tile = gridItems[idx];
+        const parent = tile.parentElement;
+
+        tile.textContent = value === 0 ? "" : value;
+
+        const styles = tileColors[value] || { bg: "#3c3a32", color: "#f9f6f2" };
+        parent.style.backgroundColor = styles.bg;
+        tile.style.color = styles.color;
+      });
+    }
+
+    function slide(row) {
+      let arr = row.filter((val) => val !== 0);
+      for (let i = 0; i < arr.length - 1; i++) {
+        if (arr[i] === arr[i + 1]) {
+          arr[i] *= 2;
+          score += arr[i];
+          arr[i + 1] = 0;
+
+          if (arr[i] === 2048) {
+            resultVal.textContent = "You Win!";
+            resultVal.style.color = "#27ae60";
+          }
+        }
+      }
+      arr = arr.filter((val) => val !== 0);
+      while (arr.length < 4) {
+        arr.push(0);
+      }
+      return arr;
+    }
+
+    function move(direction) {
+      if (isGameOver) return;
+
+      let prevBoard = [...board];
+
+      for (let i = 0; i < 4; i++) {
+        let row = [];
+
+        if (direction === "Left" || direction === "Right") {
+          row = [board[i * 4], board[i * 4 + 1], board[i * 4 + 2], board[i * 4 + 3]];
+          if (direction === "Right") row.reverse();
+
+          row = slide(row);
+
+          if (direction === "Right") row.reverse();
+          for (let j = 0; j < 4; j++) board[i * 4 + j] = row[j];
+        } else if (direction === "Up" || direction === "Down") {
+          row = [board[i], board[i + 4], board[i + 8], board[i + 12]];
+          if (direction === "Down") row.reverse();
+
+          row = slide(row);
+
+          if (direction === "Down") row.reverse();
+          for (let j = 0; j < 4; j++) board[i + j * 4] = row[j];
+        }
+      }
+
+      if (JSON.stringify(prevBoard) !== JSON.stringify(board)) {
+        generateNewBlock();
+        scoreVal.textContent = score;
+        updateBoard();
+        checkGameOver();
+      }
+    }
+
+    function checkGameOver() {
+      if (board.includes(0)) return;
+
+      for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+          const current = board[i * 4 + j];
+          if (
+            (j < 3 && current === board[i * 4 + j + 1]) ||
+            (i < 3 && current === board[(i + 1) * 4 + j])
+          ) {
+            return;
+          }
+        }
+      }
+
+      isGameOver = true;
+      resultVal.textContent = "Game Over!";
+      resultVal.style.color = "#e74c3c";
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        e.preventDefault();
+        move(e.key.replace("Arrow", ""));
+      }
+    });
+
+    restartBtn.addEventListener("click", initGame);
+
+    initGame();
+  </script>
+
+<script src="https://static.app/js/static.js" type="text/javascript"></script>
+</body>
+</html>

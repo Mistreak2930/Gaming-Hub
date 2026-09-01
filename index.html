@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arcade Hub - Gaming Hub</title>
+  <style>
+    :root {
+      --bg-dark: #070a12;
+      --card-bg: rgba(15, 23, 42, 0.7);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --primary-cyan: #38bdf8;
+      --primary-emerald: #34d399;
+      --primary-indigo: #818cf8;
+      --premium-gold: #fbbf24;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.15) 0px, transparent 45%),
+        radial-gradient(circle at 90% 90%, rgba(52, 211, 153, 0.12) 0px, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(129, 140, 248, 0.08) 0px, transparent 60%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 1240px;
+      padding: 30px 20px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Top Navigation */
+    .top-nav {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 14px 28px;
+      margin-bottom: 36px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+
+    .brand-logo {
+      font-size: 1.6rem;
+      filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6));
+    }
+
+    .brand-title {
+      background: linear-gradient(to right, var(--primary-cyan), var(--primary-indigo), var(--primary-emerald));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stats-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      backdrop-filter: blur(10px);
+    }
+
+    .stat-pill.tokens {
+      color: var(--premium-gold);
+      border-color: rgba(251, 191, 36, 0.3);
+      background: rgba(251, 191, 36, 0.08);
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.1);
+    }
+
+    .tier-badge {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .tier-badge.free {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-muted);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .tier-badge.vip {
+      background: rgba(251, 191, 36, 0.15);
+      color: var(--premium-gold);
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      box-shadow: 0 0 16px rgba(251, 191, 36, 0.25);
+    }
+
+    .nav-link-btn {
+      background: linear-gradient(135deg, var(--primary-cyan), var(--primary-emerald));
+      color: #070a12;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-link-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+    }
+
+    .nav-link-btn.vip-btn {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    }
+
+    .nav-link-btn.vip-btn:hover {
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    header h1 {
+      font-size: 3.2rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      margin-bottom: 10px;
+      background: linear-gradient(to bottom, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.15rem;
+    }
+
+    /* Search Bar */
+    .filter-bar {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .search-box {
+      flex: 1;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px 18px 14px 46px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.25s;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary-cyan);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .search-box::before {
+      content: '🔍';
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      opacity: 0.6;
+    }
+
+    /* Section Layout */
+    .section-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 24px 0 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-header h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary-cyan);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Game Card Grid */
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 22px;
+      width: 100%;
+      margin-bottom: 40px;
+    }
+
+    .game-card {
+      position: relative;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 26px 20px;
+      text-decoration: none;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+
+    .game-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.15), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .game-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(56, 189, 248, 0.5);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.2);
+    }
+
+    .game-card:hover::before {
+      opacity: 1;
+    }
+
+    .card-icon {
+      font-size: 3.2rem;
+      margin-bottom: 14px;
+      z-index: 1;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    }
+
+    .game-card:hover .card-icon {
+      transform: scale(1.15) rotate(-4deg);
+    }
+
+    .game-card h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #f1f5f9;
+      z-index: 1;
+    }
+
+    .game-card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 20px;
+      z-index: 1;
+    }
+
+    .card-footer {
+      margin-top: auto;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.85rem;
+      color: #64748b;
+      font-weight: 600;
+      z-index: 1;
+    }
+
+    .card-footer .high-score {
+      color: var(--primary-cyan);
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+
+    /* Badges */
+    .badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: 8px;
+      z-index: 2;
+    }
+
+    .badge-new {
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      box-shadow: 0 0 10px rgba(52, 211, 153, 0.2);
+    }
+
+    .badge-risk {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-soon {
+      background: rgba(255, 255, 255, 0.05);
+      color: #64748b;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .game-card.disabled {
+      pointer-events: none;
+      opacity: 0.4;
+      filter: grayscale(0.6);
+    }
+
+    .version {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 20px;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="top-nav">
+      <a href="index.html" class="brand">
+        <span class="brand-logo">⚡</span>
+        <span class="brand-title">ARCADE HUB</span>
+      </a>
+      
+      <div class="stats-container">
+        <div id="userTierBadge" class="tier-badge free">FREE MEMBER</div>
+        
+        <div class="stat-pill tokens">
+          <span>🪙</span>
+          <span id="tokenBalance">100</span> Credits
+        </div>
+        
+        <a href="rewards.html" class="nav-link-btn">
+          <span>🎁</span> Daily Rewards
+        </a>
+        
+        <a href="premium.html" class="nav-link-btn vip-btn" id="vipNavBtn">
+          <span>👑</span> VIP Pass
+        </a>
+      </div>
+    </div>
+
+    <header>
+      <h1>Offline Arcade</h1>
+      <p>Instant browser-based games. Premium feel, zero downloads.</p>
+    </header>
+
+    <div class="filter-bar">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search arcade titles..." oninput="filterGames()" />
+      </div>
+    </div>
+
+    <div class="section-header">
+      <h2>🕹️ Classic Games</h2>
+    </div>
+
+    <main class="game-grid" id="mainGrid">
+      <a href="snake.html" class="game-card" data-title="snake">
+        <div class="card-icon">🐍</div>
+        <h3>Snake Game</h3>
+        <p>Classic retro snake arena</p>
+        <div class="card-footer">
+          <span>High Score</span>
+          <span class="high-score" id="score-snake">0</span>
+        </div>
+      </a>
+
+      <a href="tetris.html" class="game-card" data-title="tetris">
+        <span class="badge badge-new">Updated</span>
+        <div class="card-icon">🧱</div>
+        <h3>Tetris Deluxe</h3>
+        <p>Stack blocks, hold pieces & clear lines</p>
+        <div class="card-footer">
+          <span>High Score</span>
+          <span class="high-score" id="score-tetris">0</span>
+        </div>
+      </a>
+
+      <a href="pong.html" class="game-card" data-title="pong">
+        <div class="card-icon">🏓</div>
+        <h3>Pong</h3>
+        <p>Classic paddle battle</p>
+        <div class="card-footer">
+          <span>High Score</span>
+          <span class="high-score" id="score-pong">0</span>
+        </div>
+      </a>
+
+      <a href="minesweeper.html" class="game-card" data-title="minesweeper">
+        <div class="card-icon">💣</div>
+        <h3>Minesweeper</h3>
+        <p>Grid-based minefield puzzle</p>
+        <div class="card-footer">
+          <span>Best Score</span>
+          <span class="high-score" id="score-minesweeper">0</span>
+        </div>
+      </a>
+
+      <a href="2048.html" class="game-card" data-title="2048">
+        <div class="card-icon">🔢</div>
+        <h3>2048</h3>
+        <p>Slide and merge tiles to max out</p>
+        <div class="card-footer">
+          <span>High Score</span>
+          <span class="high-score" id="score-2048">0</span>
+        </div>
+      </a>
+
+      <a href="ttt/index.html" class="game-card" data-title="tic tac toe">
+        <div class="card-icon">❌</div>
+        <h3>Tic Tac Toe</h3>
+        <p>Classic grid battle for 1v1 or AI</p>
+        <div class="card-footer">
+          <span>Wins</span>
+          <span class="high-score" id="score-ttt">0</span>
+        </div>
+      </a>
+
+      <a href="dino.html" class="game-card" data-title="dinosaur runner">
+        <div class="card-icon">🦖</div>
+        <h3>Dino Runner</h3>
+        <p>Endless obstacle runner</p>
+        <div class="card-footer">
+          <span>High Score</span>
+          <span class="high-score" id="score-dino">0</span>
+        </div>
+      </a>
+    </main>
+
+    <div class="section-header">
+      <h2>🔥 Arcade Risk Challenges</h2>
+    </div>
+
+    <div class="game-grid" id="challengeGrid">
+      <a href="speedrun.html" class="game-card" data-title="speedrun rush hyper">
+        <span class="badge badge-risk">25 🪙 | 4x REWARD</span>
+        <div class="card-icon">⏱️</div>
+        <h3>Speedrun Rush: Hyper</h3>
+        <p>Hit moving targets in order as velocity accelerates!</p>
+        <div class="card-footer">
+          <span>Best Payout</span>
+          <span class="high-score" id="score-speedrun">0</span>
+        </div>
+      </a>
+
+      <a href="stickman.html" class="game-card" data-title="stickman fighter">
+        <span class="badge badge-new">Active</span>
+        <div class="card-icon">⚔️</div>
+        <h3>Stickman Fighter</h3>
+        <p>Fast 2D brawl action with specials & healing</p>
+        <div class="card-footer">
+          <span>Total Wins</span>
+          <span class="high-score" id="score-stickman">0</span>
+        </div>
+      </a>
+
+      <a href="#" class="game-card disabled" data-title="precision target">
+        <span class="badge badge-risk">50 🪙 Entry</span>
+        <div class="card-icon">🎯</div>
+        <h3>Target Practice</h3>
+        <p>High-stakes accuracy mode with scaling payout</p>
+        <div class="card-footer">
+          <span>Status</span>
+          <span class="high-score">Coming Soon</span>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="version">v2.2-DELUXE</div>
+
+  <script>
+    function initializeUserData() {
+      const tokens = parseInt(localStorage.getItem('hubTokens')) || 100;
+      const isVIP = localStorage.getItem('hubVIP') === 'true';
+
+      document.getElementById('tokenBalance').textContent = tokens;
+
+      const badge = document.getElementById('userTierBadge');
+      const vipBtn = document.getElementById('vipNavBtn');
+
+      if (isVIP) {
+        badge.textContent = '👑 VIP MEMBER';
+        badge.className = 'tier-badge vip';
+        vipBtn.innerHTML = '<span>⭐</span> VIP Status';
+      } else {
+        badge.textContent = 'FREE MEMBER';
+        badge.className = 'tier-badge free';
+        vipBtn.innerHTML = '<span>👑</span> VIP Pass';
+      }
+    }
+
+    function loadHighScores() {
+      const games = ['snake', 'tetris', 'pong', 'minesweeper', '2048', 'ttt', 'dino', 'speedrun', 'stickman'];
+      games.forEach(game => {
+        let score = 0;
+        if (game === 'tetris') {
+          score = localStorage.getItem('tetris_high_score') || localStorage.getItem('tetrisHighScore') || 0;
+        } else if (game === 'stickman') {
+          score = localStorage.getItem('stickmanHighScore') || localStorage.getItem('stickman_highscore') || 0;
+        } else {
+          score = localStorage.getItem(`${game}HighScore`) || localStorage.getItem(`${game}_highscore`) || 0;
+        }
+
+        const el = document.getElementById(`score-${game}`);
+        if (el) el.textContent = score;
+      });
+    }
+
+    function filterGames() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const cards = document.querySelectorAll('.game-card');
+
+      cards.forEach(card => {
+        const title = card.getAttribute('data-title') || '';
+        if (title.includes(query)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    initializeUserData();
+    loadHighScores();
+  </script>
+
+<script src="https://static.app/js/static.js" type="text/javascript"></script>
+</body>
+</html>

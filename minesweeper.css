@@ -1,0 +1,36 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+.board {
+    display: inline-block;
+    margin: 20px;
+}
+
+.cell {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ccc;
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #eee;
+    color: #333;
+    line-height: 30px;
+}
+
+.cell:hover {
+    background-color: #ddd;
+}
+
+.revealed {
+    background-color: #ccc;
+    color: #000;
+}
+
+.mine {
+    background-color: #ff3333;
+}
