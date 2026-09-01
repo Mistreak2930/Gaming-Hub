@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Arcade Hub - Gaming Hub</title>
   
-  <!-- Supabase JS Client Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -19,6 +18,7 @@
       --premium-gold: #fbbf24;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
+      --error-red: #f87171;
     }
 
     * {
@@ -410,12 +410,12 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    /* Authentication Modal */
+    /* Modernized Authentication Modal */
     .modal-overlay {
       position: fixed;
       inset: 0;
       background: rgba(7, 10, 18, 0.85);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
       display: none;
       justify-content: center;
       align-items: center;
@@ -427,61 +427,124 @@
     }
 
     .modal-card {
-      background: #0f172a;
+      background: rgba(15, 23, 42, 0.95);
       border: 1px solid var(--border-color);
-      border-radius: 20px;
-      padding: 32px;
+      border-radius: 24px;
+      padding: 36px;
       width: 100%;
-      max-width: 400px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      max-width: 420px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.1);
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
+      position: relative;
     }
 
-    .modal-card h2 {
-      font-size: 1.5rem;
+    .modal-close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close-btn:hover {
+      color: #fff;
+    }
+
+    /* Tab Switcher */
+    .auth-tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 4px;
+      border: 1px solid var(--border-color);
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
       text-align: center;
-      background: linear-gradient(to right, var(--primary-cyan), var(--primary-emerald));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .auth-tab.active {
+      background: linear-gradient(135deg, var(--primary-cyan), var(--primary-indigo));
+      color: #070a12;
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-group label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .modal-card input {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 12px 16px;
+      border-radius: 12px;
+      padding: 14px 16px;
       color: #fff;
       font-size: 0.95rem;
       outline: none;
+      transition: border-color 0.2s;
     }
 
     .modal-card input:focus {
       border-color: var(--primary-cyan);
     }
 
-    .modal-card button {
+    .auth-submit-btn {
       background: linear-gradient(135deg, var(--primary-cyan), var(--primary-emerald));
       color: #070a12;
       border: none;
-      padding: 12px;
-      border-radius: 10px;
+      padding: 14px;
+      border-radius: 12px;
       font-weight: 800;
+      font-size: 1rem;
       cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 6px;
     }
 
-    .modal-toggle-text {
+    .auth-submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    }
+
+    .auth-submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .modal-status-msg {
       font-size: 0.85rem;
-      color: var(--text-muted);
       text-align: center;
-      cursor: pointer;
+      min-height: 20px;
+      font-weight: 600;
     }
 
-    .modal-toggle-text span {
-      color: var(--primary-cyan);
-      text-decoration: underline;
-    }
+    .modal-status-msg.error { color: var(--error-red); }
+    .modal-status-msg.success { color: var(--primary-emerald); }
   </style>
 </head>
 <body>
@@ -645,28 +708,39 @@
 
   <div class="version">v2.2-DELUXE</div>
 
-  <!-- Login/Signup Modal Overlay -->
   <div class="modal-overlay" id="authModal">
     <div class="modal-card">
-      <h2 id="modalTitle">Account Login</h2>
-      <input type="email" id="authEmail" placeholder="Email Address" />
-      <input type="password" id="authPassword" placeholder="Password" />
-      <button id="authSubmitBtn" onclick="handleAuth()">Log In</button>
-      <p class="modal-toggle-text" onclick="toggleAuthMode()">
-        <span id="authToggleText">Need an account? Sign Up</span>
-      </p>
-      <p class="modal-toggle-text" onclick="toggleAuthModal(false)">Close</p>
+      <button class="modal-close-btn" onclick="toggleAuthModal(false)">✕</button>
+      
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="loginTab" onclick="setAuthMode('login')">Log In</div>
+        <div class="auth-tab" id="signupTab" onclick="setAuthMode('signup')">Sign Up</div>
+      </div>
+
+      <div class="input-group">
+        <label for="authEmail">Email</label>
+        <input type="email" id="authEmail" placeholder="player@arcade.com" />
+      </div>
+
+      <div class="input-group">
+        <label for="authPassword">Password</label>
+        <input type="password" id="authPassword" placeholder="••••••••" />
+      </div>
+
+      <button id="authSubmitBtn" class="auth-submit-btn" onclick="handleAuth()">Log In</button>
+      
+      <div class="modal-status-msg" id="authStatusMsg"></div>
     </div>
   </div>
 
   <script>
     // --- Supabase Credentials ---
     const SUPABASE_URL = 'https://eenolwhmmyhlakkyspem.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlbm9sd2htbXlobGFra3lzcGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNzE1NTcsImV4cCI6MjEwMzg0NzU1N30.Bt1vPlikcK09k8zk-5Ga8sFY6aVNH9IfinLm3vm-uHk'; // Place your publishable key here
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVlbm9sd2htbXlobGFra3lzcGVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNzE1NTcsImV4cCI6MjEwMzg0NzU1N30.Bt1vPlikcK09k8zk-5Ga8sFY6aVNH9IfinLm3vm-uHk';
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentUser = null;
-    let isSignUpMode = false;
+    let authMode = 'login'; // 'login' or 'signup'
 
     // Initialize Page & Auth Observer
     async function init() {
@@ -690,61 +764,106 @@
       });
     }
 
-    // Modal Control Functions
+    // Modal & Tab Controls
     function toggleAuthModal(show) {
       document.getElementById('authModal').classList.toggle('active', show);
+      clearAuthStatus();
     }
 
-    function toggleAuthMode() {
-      isSignUpMode = !isSignUpMode;
-      document.getElementById('modalTitle').textContent = isSignUpMode ? 'Create Account' : 'Account Login';
-      document.getElementById('authSubmitBtn').textContent = isSignUpMode ? 'Sign Up' : 'Log In';
-      document.getElementById('authToggleText').textContent = isSignUpMode ? 'Have an account? Log In' : 'Need an account? Sign Up';
+    function setAuthMode(mode) {
+      authMode = mode;
+      const isLogin = mode === 'login';
+      
+      document.getElementById('loginTab').classList.toggle('active', isLogin);
+      document.getElementById('signupTab').classList.toggle('active', !isLogin);
+      document.getElementById('authSubmitBtn').textContent = isLogin ? 'Log In' : 'Create Account';
+      clearAuthStatus();
+    }
+
+    function showStatus(msg, isError = true) {
+      const el = document.getElementById('authStatusMsg');
+      el.textContent = msg;
+      el.className = `modal-status-msg ${isError ? 'error' : 'success'}`;
+    }
+
+    function clearAuthStatus() {
+      const el = document.getElementById('authStatusMsg');
+      el.textContent = '';
+      el.className = 'modal-status-msg';
     }
 
     // Authentication Handlers
     async function handleAuth() {
-      const email = document.getElementById('authEmail').value;
-      const password = document.getElementById('authPassword').value;
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value.trim();
+      const submitBtn = document.getElementById('authSubmitBtn');
 
-      if (!email || !password) return alert('Please enter email and password.');
+      if (!email || !password) return showStatus('Please enter both email and password.');
 
-      if (isSignUpMode) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Processing...';
+
+      if (authMode === 'signup') {
         const { data, error } = await db.auth.signUp({ email, password });
-        if (error) return alert('Sign Up Error: ' + error.message);
-
-        if (data.user) {
+        
+        if (error) {
+          showStatus(error.message);
+        } else if (data.user) {
           // Initialize DB row for new user
-          await db.from('profiles').insert([{ id: data.user.id }]);
-          alert('Account created successfully!');
-          toggleAuthModal(false);
+          const { error: profileError } = await db.from('profiles').insert([{ id: data.user.id }]);
+          
+          if (profileError) {
+            console.error('Profile creation error:', profileError.message);
+          }
+          
+          showStatus('Account created! Logging in...', false);
+          setTimeout(() => toggleAuthModal(false), 1200);
         }
       } else {
         const { error } = await db.auth.signInWithPassword({ email, password });
-        if (error) return alert('Login Error: ' + error.message);
-        toggleAuthModal(false);
+        if (error) {
+          showStatus(error.message);
+        } else {
+          showStatus('Success! Welcome back.', false);
+          setTimeout(() => toggleAuthModal(false), 1000);
+        }
       }
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = authMode === 'login' ? 'Log In' : 'Create Account';
     }
 
     async function handleLogout() {
       await db.auth.signOut();
     }
 
-    // Database Syncing Functions
+    // Global High Score Saver
+    async function saveGameScore(gameKey, newScore) {
+      localStorage.setItem(`${gameKey}HighScore`, newScore);
+
+      const scoreElement = document.getElementById(`score-${gameKey}`);
+      if (scoreElement) scoreElement.textContent = newScore;
+
+      if (currentUser) {
+        const columnName = gameKey === '2048' ? 'score_2048' : `${gameKey}_score`;
+        await db.from('profiles').update({ [columnName]: newScore }).eq('id', currentUser.id);
+      }
+    }
+
+    // Database Syncing
     async function syncUserProfile() {
       if (!currentUser) return;
 
       updateAuthUI(true);
 
-      const { data, error } = await db
+      const { data } = await db
         .from('profiles')
         .select('*')
         .eq('id', currentUser.id)
         .single();
 
       if (data) {
-        // Update UI Stat Pills
-        document.getElementById('tokenBalance').textContent = data.tokens;
+        document.getElementById('tokenBalance').textContent = data.tokens ?? 100;
 
         const badge = document.getElementById('userTierBadge');
         const vipBtn = document.getElementById('vipNavBtn');
@@ -759,7 +878,6 @@
           vipBtn.innerHTML = '<span>👑</span> VIP Pass';
         }
 
-        // Update High Score Display Cards
         const scoreMap = {
           'snake': data.snake_score,
           'tetris': data.tetris_score,
@@ -777,9 +895,8 @@
           if (el) el.textContent = score || 0;
         }
 
-        // Sync local storage as offline backup
-        localStorage.setItem('hubTokens', data.tokens);
-        localStorage.setItem('hubVIP', data.is_vip);
+        localStorage.setItem('hubTokens', data.tokens ?? 100);
+        localStorage.setItem('hubVIP', data.is_vip ?? false);
       }
     }
 
@@ -796,8 +913,6 @@
 
     function loadFallbackLocalStorage() {
       const tokens = parseInt(localStorage.getItem('hubTokens')) || 100;
-      const isVIP = localStorage.getItem('hubVIP') === 'true';
-
       document.getElementById('tokenBalance').textContent = tokens;
 
       const badge = document.getElementById('userTierBadge');
@@ -828,11 +943,7 @@
 
       cards.forEach(card => {
         const title = card.getAttribute('data-title') || '';
-        if (title.includes(query)) {
-          card.style.display = 'flex';
-        } else {
-          card.style.display = 'none';
-        }
+        card.style.display = title.includes(query) ? 'flex' : 'none';
       });
     }
 
