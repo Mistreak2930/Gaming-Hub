@@ -118,6 +118,12 @@
       box-shadow: 0 0 12px rgba(251, 191, 36, 0.1);
     }
 
+    .stat-pill.player-name {
+      color: var(--primary-cyan);
+      border-color: rgba(56, 189, 248, 0.3);
+      background: rgba(56, 189, 248, 0.08);
+    }
+
     .tier-badge {
       padding: 8px 16px;
       border-radius: 20px;
@@ -291,6 +297,7 @@
       text-align: center;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       overflow: hidden;
+      cursor: pointer;
     }
 
     .game-card::before {
@@ -414,7 +421,7 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(7, 10, 18, 0.85);
+      background: rgba(7, 10, 18, 0.88);
       backdrop-filter: blur(12px);
       display: none;
       justify-content: center;
@@ -436,24 +443,8 @@
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.1);
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 16px;
       position: relative;
-    }
-
-    .modal-close-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-
-    .modal-close-btn:hover {
-      color: #fff;
     }
 
     /* Tab Switcher */
@@ -557,18 +548,22 @@
       </a>
       
       <div class="stats-container">
-        <div id="userTierBadge" class="tier-badge free">GUEST</div>
+        <div id="playerNameTag" class="stat-pill player-name" style="display: none;">
+          👤 <span id="nicknameDisplay">Player</span>
+        </div>
+
+        <div id="userTierBadge" class="tier-badge free">FREE MEMBER</div>
         
         <div class="stat-pill tokens">
           <span>🪙</span>
-          <span id="tokenBalance">100</span> Credits
+          <span id="tokenBalance">0</span> Credits
         </div>
         
         <button id="authBtn" class="nav-link-btn auth-btn" onclick="toggleAuthModal(true)">
           <span>🔑</span> Log In
         </button>
 
-        <a href="rewards.html" class="nav-link-btn">
+        <a href="rewards.html" class="nav-link-btn" id="rewardsNavBtn">
           <span>🎁</span> Daily Rewards
         </a>
         
@@ -579,8 +574,8 @@
     </div>
 
     <header>
-      <h1>Offline Arcade</h1>
-      <p>Instant browser-based games. Premium feel, zero downloads.</p>
+      <h1>Arcade Hub</h1>
+      <p>Sign in to launch games, save high scores, and earn credits directly to your account.</p>
     </header>
 
     <div class="filter-bar">
@@ -594,7 +589,7 @@
     </div>
 
     <main class="game-grid" id="mainGrid">
-      <a href="snake.html" class="game-card" data-title="snake">
+      <div onclick="launchGame('snake.html')" class="game-card" data-title="snake">
         <div class="card-icon">🐍</div>
         <h3>Snake Game</h3>
         <p>Classic retro snake arena</p>
@@ -602,9 +597,9 @@
           <span>High Score</span>
           <span class="high-score" id="score-snake">0</span>
         </div>
-      </a>
+      </div>
 
-      <a href="tetris.html" class="game-card" data-title="tetris">
+      <div onclick="launchGame('tetris.html')" class="game-card" data-title="tetris">
         <span class="badge badge-new">Updated</span>
         <div class="card-icon">🧱</div>
         <h3>Tetris Deluxe</h3>
@@ -613,9 +608,9 @@
           <span>High Score</span>
           <span class="high-score" id="score-tetris">0</span>
         </div>
-      </a>
+      </div>
 
-      <a href="pong.html" class="game-card" data-title="pong">
+      <div onclick="launchGame('pong.html')" class="game-card" data-title="pong">
         <div class="card-icon">🏓</div>
         <h3>Pong</h3>
         <p>Classic paddle battle</p>
@@ -623,9 +618,9 @@
           <span>High Score</span>
           <span class="high-score" id="score-pong">0</span>
         </div>
-      </a>
+      </div>
 
-      <a href="minesweeper.html" class="game-card" data-title="minesweeper">
+      <div onclick="launchGame('minesweeper.html')" class="game-card" data-title="minesweeper">
         <div class="card-icon">💣</div>
         <h3>Minesweeper</h3>
         <p>Grid-based minefield puzzle</p>
@@ -633,9 +628,9 @@
           <span>Best Score</span>
           <span class="high-score" id="score-minesweeper">0</span>
         </div>
-      </a>
+      </div>
 
-      <a href="2048.html" class="game-card" data-title="2048">
+      <div onclick="launchGame('2048.html')" class="game-card" data-title="2048">
         <div class="card-icon">🔢</div>
         <h3>2048</h3>
         <p>Slide and merge tiles to max out</p>
@@ -643,9 +638,9 @@
           <span>High Score</span>
           <span class="high-score" id="score-2048">0</span>
         </div>
-      </a>
+      </div>
 
-      <a href="ttt/index.html" class="game-card" data-title="tic tac toe">
+      <div onclick="launchGame('ttt/index.html')" class="game-card" data-title="tic tac toe">
         <div class="card-icon">❌</div>
         <h3>Tic Tac Toe</h3>
         <p>Classic grid battle for 1v1 or AI</p>
@@ -653,9 +648,9 @@
           <span>Wins</span>
           <span class="high-score" id="score-ttt">0</span>
         </div>
-      </a>
+      </div>
 
-      <a href="dino.html" class="game-card" data-title="dinosaur runner">
+      <div onclick="launchGame('dino.html')" class="game-card" data-title="dinosaur runner">
         <div class="card-icon">🦖</div>
         <h3>Dino Runner</h3>
         <p>Endless obstacle runner</p>
@@ -663,7 +658,7 @@
           <span>High Score</span>
           <span class="high-score" id="score-dino">0</span>
         </div>
-      </a>
+      </div>
     </main>
 
     <div class="section-header">
@@ -671,7 +666,7 @@
     </div>
 
     <div class="game-grid" id="challengeGrid">
-      <a href="speedrun.html" class="game-card" data-title="speedrun rush hyper">
+      <div onclick="launchGame('speedrun.html')" class="game-card" data-title="speedrun rush hyper">
         <span class="badge badge-risk">25 🪙 | 4x REWARD</span>
         <div class="card-icon">⏱️</div>
         <h3>Speedrun Rush: Hyper</h3>
@@ -680,9 +675,9 @@
           <span>Best Payout</span>
           <span class="high-score" id="score-speedrun">0</span>
         </div>
-      </a>
+      </div>
 
-      <a href="stickman.html" class="game-card" data-title="stickman fighter">
+      <div onclick="launchGame('stickman.html')" class="game-card" data-title="stickman fighter">
         <span class="badge badge-new">Active</span>
         <div class="card-icon">⚔️</div>
         <h3>Stickman Fighter</h3>
@@ -691,9 +686,9 @@
           <span>Total Wins</span>
           <span class="high-score" id="score-stickman">0</span>
         </div>
-      </a>
+      </div>
 
-      <a href="#" class="game-card disabled" data-title="precision target">
+      <div class="game-card disabled" data-title="precision target">
         <span class="badge badge-risk">50 🪙 Entry</span>
         <div class="card-icon">🎯</div>
         <h3>Target Practice</h3>
@@ -702,19 +697,22 @@
           <span>Status</span>
           <span class="high-score">Coming Soon</span>
         </div>
-      </a>
+      </div>
     </div>
   </div>
 
-  <div class="version">v2.2-DELUXE</div>
+  <div class="version">v3.0-ONLINE</div>
 
   <div class="modal-overlay" id="authModal">
     <div class="modal-card">
-      <button class="modal-close-btn" onclick="toggleAuthModal(false)">✕</button>
-      
       <div class="auth-tabs">
         <div class="auth-tab active" id="loginTab" onclick="setAuthMode('login')">Log In</div>
         <div class="auth-tab" id="signupTab" onclick="setAuthMode('signup')">Sign Up</div>
+      </div>
+
+      <div class="input-group" id="nicknameGroup" style="display: none;">
+        <label for="authNickname">Nickname</label>
+        <input type="text" id="authNickname" placeholder="ShadowNinja" maxlength="20" />
       </div>
 
       <div class="input-group">
@@ -742,14 +740,14 @@
     let currentUser = null;
     let authMode = 'login'; // 'login' or 'signup'
 
-    // Initialize Page & Auth Observer
+    // Initialize Page & Mandatory Auth Guard
     async function init() {
       const { data: { session } } = await db.auth.getSession();
       if (session) {
         currentUser = session.user;
         await syncUserProfile();
       } else {
-        loadFallbackLocalStorage();
+        toggleAuthModal(true);
       }
 
       db.auth.onAuthStateChange(async (event, session) => {
@@ -759,14 +757,24 @@
         } else {
           currentUser = null;
           updateAuthUI(false);
-          loadFallbackLocalStorage();
+          toggleAuthModal(true);
         }
       });
     }
 
+    function launchGame(url) {
+      if (!currentUser) {
+        toggleAuthModal(true);
+        showStatus('Please log in or sign up to play.');
+        return;
+      }
+      window.location.href = url;
+    }
+
     // Modal & Tab Controls
     function toggleAuthModal(show) {
-      document.getElementById('authModal').classList.toggle('active', show);
+      const modal = document.getElementById('authModal');
+      modal.classList.toggle('active', show);
       clearAuthStatus();
     }
 
@@ -776,6 +784,7 @@
       
       document.getElementById('loginTab').classList.toggle('active', isLogin);
       document.getElementById('signupTab').classList.toggle('active', !isLogin);
+      document.getElementById('nicknameGroup').style.display = isLogin ? 'none' : 'flex';
       document.getElementById('authSubmitBtn').textContent = isLogin ? 'Log In' : 'Create Account';
       clearAuthStatus();
     }
@@ -796,9 +805,14 @@
     async function handleAuth() {
       const email = document.getElementById('authEmail').value.trim();
       const password = document.getElementById('authPassword').value.trim();
+      const nickname = document.getElementById('authNickname').value.trim();
       const submitBtn = document.getElementById('authSubmitBtn');
 
       if (!email || !password) return showStatus('Please enter both email and password.');
+
+      if (authMode === 'signup' && !nickname) {
+        return showStatus('Please enter a nickname.');
+      }
 
       submitBtn.disabled = true;
       submitBtn.textContent = 'Processing...';
@@ -809,15 +823,20 @@
         if (error) {
           showStatus(error.message);
         } else if (data.user) {
-          // Initialize DB row for new user
-          const { error: profileError } = await db.from('profiles').insert([{ id: data.user.id }]);
+          // Initialize DB row using upsert
+          const { error: profileError } = await db.from('profiles').upsert({
+            id: data.user.id,
+            nickname: nickname,
+            tokens: 100,
+            is_vip: false
+          });
           
           if (profileError) {
             console.error('Profile creation error:', profileError.message);
           }
           
           showStatus('Account created! Logging in...', false);
-          setTimeout(() => toggleAuthModal(false), 1200);
+          setTimeout(() => toggleAuthModal(false), 1000);
         }
       } else {
         const { error } = await db.auth.signInWithPassword({ email, password });
@@ -825,7 +844,7 @@
           showStatus(error.message);
         } else {
           showStatus('Success! Welcome back.', false);
-          setTimeout(() => toggleAuthModal(false), 1000);
+          setTimeout(() => toggleAuthModal(false), 800);
         }
       }
 
@@ -837,33 +856,38 @@
       await db.auth.signOut();
     }
 
-    // Global High Score Saver
-    async function saveGameScore(gameKey, newScore) {
-      localStorage.setItem(`${gameKey}HighScore`, newScore);
-
-      const scoreElement = document.getElementById(`score-${gameKey}`);
-      if (scoreElement) scoreElement.textContent = newScore;
-
-      if (currentUser) {
-        const columnName = gameKey === '2048' ? 'score_2048' : `${gameKey}_score`;
-        await db.from('profiles').update({ [columnName]: newScore }).eq('id', currentUser.id);
-      }
-    }
-
     // Database Syncing
     async function syncUserProfile() {
       if (!currentUser) return;
 
       updateAuthUI(true);
 
-      const { data } = await db
+      let { data, error } = await db
         .from('profiles')
         .select('*')
         .eq('id', currentUser.id)
-        .single();
+        .maybeSingle();
+
+      // Ensure profile row exists if missing
+      if (!data) {
+        const defaultName = currentUser.email.split('@')[0];
+        const { data: newProfile } = await db
+          .from('profiles')
+          .upsert({ id: currentUser.id, nickname: defaultName, tokens: 100 })
+          .select()
+          .single();
+        data = newProfile;
+      }
 
       if (data) {
         document.getElementById('tokenBalance').textContent = data.tokens ?? 100;
+
+        const nicknameDisplay = document.getElementById('nicknameDisplay');
+        const playerNameTag = document.getElementById('playerNameTag');
+        if (data.nickname) {
+          nicknameDisplay.textContent = data.nickname;
+          playerNameTag.style.display = 'flex';
+        }
 
         const badge = document.getElementById('userTierBadge');
         const vipBtn = document.getElementById('vipNavBtn');
@@ -894,9 +918,6 @@
           const el = document.getElementById(`score-${game}`);
           if (el) el.textContent = score || 0;
         }
-
-        localStorage.setItem('hubTokens', data.tokens ?? 100);
-        localStorage.setItem('hubVIP', data.is_vip ?? false);
       }
     }
 
@@ -905,36 +926,13 @@
       if (isLoggedIn) {
         authBtn.innerHTML = '<span>🚪</span> Log Out';
         authBtn.onclick = handleLogout;
+        toggleAuthModal(false);
       } else {
         authBtn.innerHTML = '<span>🔑</span> Log In';
         authBtn.onclick = () => toggleAuthModal(true);
+        document.getElementById('playerNameTag').style.display = 'none';
+        document.getElementById('tokenBalance').textContent = '0';
       }
-    }
-
-    function loadFallbackLocalStorage() {
-      const tokens = parseInt(localStorage.getItem('hubTokens')) || 100;
-      document.getElementById('tokenBalance').textContent = tokens;
-
-      const badge = document.getElementById('userTierBadge');
-      if (badge) {
-        badge.textContent = 'GUEST';
-        badge.className = 'tier-badge free';
-      }
-
-      const games = ['snake', 'tetris', 'pong', 'minesweeper', '2048', 'ttt', 'dino', 'speedrun', 'stickman'];
-      games.forEach(game => {
-        let score = 0;
-        if (game === 'tetris') {
-          score = localStorage.getItem('tetris_high_score') || localStorage.getItem('tetrisHighScore') || 0;
-        } else if (game === 'stickman') {
-          score = localStorage.getItem('stickmanHighScore') || localStorage.getItem('stickman_highscore') || 0;
-        } else {
-          score = localStorage.getItem(`${game}HighScore`) || localStorage.getItem(`${game}_highscore`) || 0;
-        }
-
-        const el = document.getElementById(`score-${game}`);
-        if (el) el.textContent = score;
-      });
     }
 
     function filterGames() {
