@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tetris Deluxe - Offline Gaming Hub</title>
+  <title>Tetris Deluxe - Arcade Edition</title>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -23,7 +25,7 @@
     }
 
     .header {
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       text-align: center;
     }
 
@@ -45,6 +47,33 @@
 
     .back-btn:hover {
       color: #38bdf8;
+    }
+
+    .arcade-bar {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 12px;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.85rem;
+      align-items: center;
+    }
+
+    .token-badge {
+      color: #facc15;
+      font-weight: bold;
+    }
+
+    .vip-badge {
+      background: linear-gradient(to right, #f59e0b, #ef4444);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      display: none;
     }
 
     .game-container {
@@ -163,6 +192,12 @@
     <h1>Tetris Deluxe</h1>
   </div>
 
+  <div class="arcade-bar">
+    <span>Tokens: <span id="token-count" class="token-badge">0</span></span>
+    <span id="vip-tag" class="vip-badge">VIP PASS</span>
+    <span id="sync-status" style="color: #64748b; font-size: 0.75rem;">Connecting...</span>
+  </div>
+
   <div class="game-container">
     <div class="canvas-wrapper" id="canvas-wrapper">
       <canvas id="tetris" width="240" height="400"></canvas>
@@ -199,12 +234,18 @@
           <p>↓ : Soft Drop | Space : Hard</p>
           <p>C / Shift : Hold | P : Pause</p>
         </div>
-        <button class="btn" id="start-btn">Reset</button>
+        <button class="btn" id="start-btn">Play Game (1 Token)</button>
       </div>
     </div>
   </div>
 
   <script>
+    // --- SUPABASE CONFIGURATION ---
+    const SUPABASE_URL = "YOUR_SUPABASE_URL_HERE";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // --- GAME CONSTANTS & ELEMENTS ---
     const canvas = document.getElementById('tetris');
     const context = canvas.getContext('2d');
     const holdCanvas = document.getElementById('hold-canvas');
@@ -218,6 +259,9 @@
     const levelElement = document.getElementById('level');
     const startBtn = document.getElementById('start-btn');
     const canvasWrapper = document.getElementById('canvas-wrapper');
+    const tokenDisplay = document.getElementById('token-count');
+    const vipTag = document.getElementById('vip-tag');
+    const syncStatus = document.getElementById('sync-status');
 
     const BLOCK_SIZE = 20;
     context.scale(BLOCK_SIZE, BLOCK_SIZE);
@@ -240,16 +284,93 @@
     let clearAnimProgress = 0;
     let isPaused = false;
     let isGameOver = false;
+    let gameActive = false;
 
     let bag = [];
     let nextPiece = null;
     let holdPiece = null;
     let canHold = true;
 
-    // Load High Score
-    let highScore = localStorage.getItem('tetris_high_score') || 0;
-    highScoreElement.innerText = highScore;
+    // Player Stats & Cloud Sync Variables
+    let currentUser = null;
+    let tokens = parseInt(localStorage.getItem('arcade_tokens')) || 0;
+    let isVip = false;
+    let highScore = parseInt(localStorage.getItem('tetris_high_score')) || 0;
 
+    highScoreElement.innerText = highScore;
+    tokenDisplay.innerText = tokens;
+
+    // --- SUPABASE AUTH & DATA SYNC ---
+    async function initAuthAndSync() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          currentUser = session.user;
+          syncStatus.innerText = "Cloud Sync Active";
+          syncStatus.style.color = "#34d399";
+          await loadUserProfile();
+        } else {
+          syncStatus.innerText = "Offline Mode";
+        }
+      } catch (err) {
+        console.error("Supabase Init Error:", err);
+        syncStatus.innerText = "Offline Mode";
+      }
+    }
+
+    async function loadUserProfile() {
+      if (!currentUser) return;
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('tokens, is_vip, tetris_score')
+          .eq('id', currentUser.id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          tokens = data.tokens ?? tokens;
+          isVip = data.is_vip ?? false;
+          if ((data.tetris_score || 0) > highScore) {
+            highScore = data.tetris_score;
+            localStorage.setItem('tetris_high_score', highScore);
+          }
+
+          updateUI();
+        }
+      } catch (err) {
+        console.error("Failed to load profile from Supabase:", err);
+      }
+    }
+
+    async function saveStatsToCloud() {
+      // Always update local storage as fallback
+      localStorage.setItem('arcade_tokens', tokens);
+      localStorage.setItem('tetris_high_score', highScore);
+
+      if (!currentUser) return;
+
+      try {
+        await supabase
+          .from('profiles')
+          .update({
+            tokens: tokens,
+            tetris_score: highScore
+          })
+          .eq('id', currentUser.id);
+      } catch (err) {
+        console.error("Cloud Save Failed:", err);
+      }
+    }
+
+    function updateUI() {
+      tokenDisplay.innerText = tokens;
+      highScoreElement.innerText = highScore;
+      vipTag.style.display = isVip ? 'inline-block' : 'none';
+    }
+
+    // --- GAME MECHANICS ---
     function createMatrix(w, h) {
       const matrix = [];
       while (h--) {
@@ -268,7 +389,6 @@
       if (type === 'Z') return [[7, 7, 0], [0, 7, 7], [0, 0, 0]];
     }
 
-    // 7-Bag Randomizer
     function getNextFromBag() {
       if (bag.length === 0) {
         bag = ['I', 'J', 'L', 'O', 'S', 'T', 'Z'];
@@ -377,7 +497,6 @@
       context.fillStyle = '#0b0f19';
       context.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw Grid Lines
       context.strokeStyle = 'rgba(255, 255, 255, 0.02)';
       context.lineWidth = 0.02;
       for (let x = 0; x < arena[0].length; x++) {
@@ -395,7 +514,7 @@
         });
       }
 
-      if (player.matrix && clearingRows.length === 0 && !isGameOver) {
+      if (player.matrix && clearingRows.length === 0 && !isGameOver && gameActive) {
         const ghostPos = getGhostPosition();
         drawMatrix(player.matrix, ghostPos, context, true);
         drawMatrix(player.matrix, player.pos);
@@ -504,7 +623,6 @@
       let offset = 1;
       rotate(player.matrix, dir);
       
-      // Wall Kick Implementation
       while (collide(arena, player)) {
         player.pos.x += offset;
         offset = -(offset + (offset > 0 ? 1 : -1));
@@ -527,7 +645,7 @@
     }
 
     function hardDrop() {
-      if (isPaused || isGameOver) return;
+      if (isPaused || isGameOver || !gameActive) return;
       while (!collide(arena, player)) {
         player.pos.y++;
       }
@@ -538,7 +656,7 @@
     }
 
     function holdPieceAction() {
-      if (!canHold || isPaused || isGameOver) return;
+      if (!canHold || isPaused || isGameOver || !gameActive) return;
 
       if (!holdPiece) {
         holdPiece = player.type;
@@ -557,7 +675,7 @@
     }
 
     function playerMove(dir) {
-      if (isPaused || isGameOver) return;
+      if (isPaused || isGameOver || !gameActive) return;
       player.pos.x += dir;
       if (collide(arena, player)) player.pos.x -= dir;
     }
@@ -576,16 +694,36 @@
       canHold = true;
 
       if (collide(arena, player)) {
-        isGameOver = true;
-        if (player.score > highScore) {
-          highScore = player.score;
-          localStorage.setItem('tetris_high_score', highScore);
-          highScoreElement.innerText = highScore;
-        }
+        handleGameOver();
       }
     }
 
+    function handleGameOver() {
+      isGameOver = true;
+      gameActive = false;
+      startBtn.innerText = "Play Game (1 Token)";
+
+      if (player.score > highScore) {
+        highScore = player.score;
+        highScoreElement.innerText = highScore;
+      }
+
+      saveStatsToCloud();
+    }
+
     function resetGame() {
+      // Validate Token Cost
+      if (!isVip && tokens < 1) {
+        alert("Out of credits! Earn or purchase tokens to continue playing.");
+        return;
+      }
+
+      // Deduct Token
+      if (!isVip) {
+        tokens--;
+        tokenDisplay.innerText = tokens;
+      }
+
       arena.forEach(row => row.fill(0));
       player.score = 0;
       player.lines = 0;
@@ -597,10 +735,13 @@
       isGameOver = false;
       isPaused = false;
       canHold = true;
+      gameActive = true;
       
+      startBtn.innerText = "Restart Game";
       drawMiniCanvas(holdContext, null);
       updateScore();
       playerReset();
+      saveStatsToCloud();
     }
 
     let dropCounter = 0;
@@ -611,7 +752,7 @@
       const deltaTime = time - lastTime;
       lastTime = time;
 
-      if (!isPaused && !isGameOver) {
+      if (!isPaused && !isGameOver && gameActive) {
         if (clearingRows.length > 0) {
           clearAnimProgress += deltaTime / 200;
           if (clearAnimProgress >= 1) {
@@ -653,23 +794,22 @@
         return;
       }
 
-      if (clearingRows.length > 0 || isPaused || isGameOver) return;
+      if (clearingRows.length > 0 || isPaused || isGameOver || !gameActive) return;
 
-      if (event.keyCode === 37) playerMove(-1); // Left
-      else if (event.keyCode === 39) playerMove(1); // Right
-      else if (event.keyCode === 40) playerDrop(); // Down
-      else if (event.keyCode === 38) playerRotate(1); // Up (CW)
-      else if (event.keyCode === 90) playerRotate(-1); // Z (CCW)
-      else if (event.keyCode === 32) hardDrop(); // Space
-      else if (event.keyCode === 67 || event.keyCode === 16) holdPieceAction(); // C or Shift
+      if (event.keyCode === 37) playerMove(-1);
+      else if (event.keyCode === 39) playerMove(1);
+      else if (event.keyCode === 40) playerDrop();
+      else if (event.keyCode === 38) playerRotate(1);
+      else if (event.keyCode === 90) playerRotate(-1);
+      else if (event.keyCode === 32) hardDrop();
+      else if (event.keyCode === 67 || event.keyCode === 16) holdPieceAction();
     });
 
     startBtn.addEventListener('click', resetGame);
 
-    resetGame();
+    // Initial Sync & Boot
+    initAuthAndSync();
     update();
   </script>
-
-<script src="https://static.app/js/static.js" type="text/javascript"></script>
 </body>
 </html>
